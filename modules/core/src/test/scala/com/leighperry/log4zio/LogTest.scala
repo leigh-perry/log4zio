@@ -30,7 +30,7 @@ object LogTest extends Properties("LogTest") with TestSupport {
   property("console") = forAllZIO(genLogData) {
     ld =>
       for {
-        dc <- dummyConsole(ld.appName)
+        dc <- testLogger(ld.appName)
         (entries, log) = dc
         _ <- ZIO.traverse_(ld.logStrings)(s => ld.logFn(log, s))
         strings <- entries.get
@@ -38,7 +38,7 @@ object LogTest extends Properties("LogTest") with TestSupport {
       } yield strings.shouldBe(expected)
   }
 
-  private def dummyConsole(prefix: Option[String]): ZIO[Any, Nothing, (Ref[List[String]], Log)] =
+  private def testLogger(prefix: Option[String]): ZIO[Any, Nothing, (Ref[List[String]], Log)] =
     for {
       entries <- Ref.make(List.empty[String])
       log <- ZIO.effectTotal {
