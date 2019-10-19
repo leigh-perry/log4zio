@@ -18,10 +18,12 @@ final case class LogWriter[A](log: A => UIO[Unit]) {
 ////
 
 trait Level { val name: String }
-object Error extends Level { override val name = "ERROR" }
-object Warn extends Level { override val name = "WARN" }
-object Info extends Level { override val name = "INFO" }
-object Debug extends Level { override val name = "DEBUG" }
+object Level {
+  object Error extends Level { override val name = "ERROR" }
+  object Warn extends Level { override val name = "WARN" }
+  object Info extends Level { override val name = "INFO" }
+  object Debug extends Level { override val name = "DEBUG" }
+}
 
 final case class TaggedMessage[A](message: A, level: Level, timestamp: String)
 
@@ -60,22 +62,22 @@ object TaggedStringLogWriter {
 }
 
 /**
-* An implementation of conventional logging with levels
+ * An implementation of conventional logging with levels
  * @param logWriter the output medium for the logging, eg `TaggedStringLogWriter.console`
  */
 final class TaggedLogger private (logWriter: LogWriter[(Level, String)]) {
 
   def error(s: String): UIO[Unit] =
-    logWriter.log(Error -> s)
+    logWriter.log(Level.Error -> s)
 
   def warn(s: String): UIO[Unit] =
-    logWriter.log(Warn -> s)
+    logWriter.log(Level.Warn -> s)
 
   def info(s: String): UIO[Unit] =
-    logWriter.log(Info -> s)
+    logWriter.log(Level.Info -> s)
 
   def debug(s: String): UIO[Unit] =
-    logWriter.log(Debug -> s)
+    logWriter.log(Level.Debug -> s)
 
 }
 
