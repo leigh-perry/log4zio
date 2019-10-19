@@ -17,16 +17,13 @@ final case class LogWriter[A](log: A => UIO[Unit]) {
 
 ////
 
-object Tagged {
+trait Level { val name: String }
+object Error extends Level { override val name = "ERROR" }
+object Warn extends Level { override val name = "WARN" }
+object Info extends Level { override val name = "INFO" }
+object Debug extends Level { override val name = "DEBUG" }
 
-  trait Level { val name: String }
-  final object Error extends Level { override val name = "ERROR" }
-  final object Warn extends Level { override val name = "WARN" }
-  final object Info extends Level { override val name = "INFO" }
-  final object Debug extends Level { override val name = "DEBUG" }
-
-  final case class TaggedMessage[A](message: A, level: Level, timestamp: String)
-}
+final case class TaggedMessage[A](message: A, level: Level, timestamp: String)
 
 //// output implementations
 
@@ -36,7 +33,6 @@ object RawLogger {
 }
 
 object TaggedStringLogWriter {
-  import Tagged._
 
   def console(prefix: Option[String]): LogWriter[(Level, String)] =
     RawLogger
@@ -63,24 +59,24 @@ object TaggedStringLogWriter {
     DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS")
 }
 
-final class Logger private (logWriter: LogWriter[(Tagged.Level, String)]) {
+final class Logger private (logWriter: LogWriter[(Level, String)]) {
 
   def error(prefix: Option[String], s: String): UIO[Unit] =
-    logWriter.log(Tagged.Error -> s)
+    logWriter.log(Error -> s)
 
   def warn(prefix: Option[String], s: String): UIO[Unit] =
-    logWriter.log(Tagged.Warn -> s)
+    logWriter.log(Warn -> s)
 
   def info(prefix: Option[String], s: String): UIO[Unit] =
-    logWriter.log(Tagged.Info -> s)
+    logWriter.log(Info -> s)
 
   def debug(prefix: Option[String], s: String): UIO[Unit] =
-    logWriter.log(Tagged.Debug -> s)
+    logWriter.log(Debug -> s)
 
 }
 
 object Logger {
-  def apply(logWriter: LogWriter[(Tagged.Level, String)]): Logger =
+  def apply(logWriter: LogWriter[(Level, String)]): Logger =
     new Logger(logWriter)
 }
 
