@@ -7,18 +7,18 @@ import zio.{ Task, UIO, ZIO }
 
 object Sketch {
 
-  final case class LogAction[A](log: A => UIO[Unit]) {
+  final case class Logger[A](log: A => UIO[Unit]) {
 
-    def contramap[B](f: B => A): LogAction[B] =
-      LogAction[B](b => log(f(b)))
+    def contramap[B](f: B => A): Logger[B] =
+      Logger[B](b => log(f(b)))
 
-    def contramapM[B](f: B => UIO[A]): LogAction[B] =
-      LogAction[B](b => f(b).flatMap(log(_)))
+    def contramapM[B](f: B => UIO[A]): Logger[B] =
+      Logger[B](b => f(b).flatMap(log(_)))
 
   }
 
-  val rawConsole: LogAction[String] =
-    LogAction[String](zio.console.Console.Live.console.putStrLn)
+  val rawConsole: Logger[String] =
+    Logger[String](zio.console.Console.Live.console.putStrLn)
 
   trait Level { val name: String }
   final object Error extends Level { override val name = "ERROR" }
@@ -39,10 +39,10 @@ object Sketch {
       m.message
     )
 
-  val taggedMsgConsole: LogAction[TaggedMessage] =
+  val taggedMsgConsole: Logger[TaggedMessage] =
     rawConsole.contramap(formatMessage)
 
-  val msgStdout: LogAction[(Level, String)] =
+  val msgStdout: Logger[(Level, String)] =
     taggedMsgConsole.contramapM {
       case (level, message) =>
         timestamp.map(TaggedMessage(message, level, _))
