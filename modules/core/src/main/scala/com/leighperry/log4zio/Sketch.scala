@@ -59,32 +59,36 @@ object TaggedStringLogWriter {
     DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS")
 }
 
-final class Logger private (logWriter: LogWriter[(Level, String)]) {
+/**
+* An implementation of conventional logging with levels
+ * @param logWriter the output medium for the logging, eg `TaggedStringLogWriter.console`
+ */
+final class TaggedLogger private (logWriter: LogWriter[(Level, String)]) {
 
-  def error(prefix: Option[String], s: String): UIO[Unit] =
+  def error(s: String): UIO[Unit] =
     logWriter.log(Error -> s)
 
-  def warn(prefix: Option[String], s: String): UIO[Unit] =
+  def warn(s: String): UIO[Unit] =
     logWriter.log(Warn -> s)
 
-  def info(prefix: Option[String], s: String): UIO[Unit] =
+  def info(s: String): UIO[Unit] =
     logWriter.log(Info -> s)
 
-  def debug(prefix: Option[String], s: String): UIO[Unit] =
+  def debug(s: String): UIO[Unit] =
     logWriter.log(Debug -> s)
 
 }
 
-object Logger {
-  def apply(logWriter: LogWriter[(Level, String)]): Logger =
-    new Logger(logWriter)
+object TaggedLogger {
+  def apply(logWriter: LogWriter[(Level, String)]): TaggedLogger =
+    new TaggedLogger(logWriter)
 }
 
 object XXX extends zio.App {
 
-  val logger = Logger(TaggedStringLogWriter.console(Some("an-app")))
+  val logger = TaggedLogger(TaggedStringLogWriter.console(Some("an-app")))
 
   override def run(args: List[String]): ZIO[zio.ZEnv, Nothing, Int] =
-    (logger.info(None, "someinfo") *> logger.error(None, "someerror"))
+    (logger.info("someinfo") *> logger.error("someerror"))
       .map(_ => 1)
 }
