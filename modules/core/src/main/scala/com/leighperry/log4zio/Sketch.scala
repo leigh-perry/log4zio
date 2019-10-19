@@ -27,7 +27,7 @@ final case class TaggedMessage[A](message: A, level: Level, timestamp: String)
 
 //// output implementations
 
-object RawLogger {
+object RawLogWriter {
   def console[A]: LogWriter[A] =
     LogWriter[A](a => zio.console.Console.Live.console.putStrLn(a.toString)) // TODO toString?
 }
@@ -35,7 +35,7 @@ object RawLogger {
 object TaggedStringLogWriter {
 
   def console(prefix: Option[String]): LogWriter[(Level, String)] =
-    RawLogger
+    RawLogWriter
       .console
       .contramap {
         m: TaggedMessage[String] =>
