@@ -16,17 +16,17 @@ final case class LogWriter[A](log: A => UIO[Unit]) {
 }
 
 object RawConsole {
-  val log: LogWriter[String] =
+  val logger: LogWriter[String] =
     LogWriter[String](zio.console.Console.Live.console.putStrLn)
 }
 
 object TaggedLogger {
 
   trait Level { val name: String }
-  object Error extends Level { override val name = "ERROR" }
-  object Warn extends Level { override val name = "WARN" }
-  object Info extends Level { override val name = "INFO" }
-  object Debug extends Level { override val name = "DEBUG" }
+  final object Error extends Level { override val name = "ERROR" }
+  final object Warn extends Level { override val name = "WARN" }
+  final object Info extends Level { override val name = "INFO" }
+  final object Debug extends Level { override val name = "DEBUG" }
 
   final case class TaggedMessage(message: String, level: Level, timestamp: String)
 
@@ -41,21 +41,21 @@ object TaggedLogger {
       m.message
     )
 
-  val rawLog: LogWriter[TaggedMessage] =
-    RawConsole.log.contramap(formatMessage)
+  val rawLogger: LogWriter[TaggedMessage] =
+    RawConsole.logger.contramap(formatMessage)
 
-  val log: LogWriter[(Level, String)] =
-    rawLog.contramapM {
+  val logger: LogWriter[(Level, String)] =
+    rawLogger.contramapM {
       case (level, message) =>
         timestamp.map(TaggedMessage(message, level, _))
     }
 
   //// shortcuts
 
-  def error(s: String): UIO[Unit] = log.log(Error -> s)
-  def warn(s: String): UIO[Unit] = log.log(Warn -> s)
-  def info(s: String): UIO[Unit] = log.log(Info -> s)
-  def debug(s: String): UIO[Unit] = log.log(Debug -> s)
+  def error(s: String): UIO[Unit] = logger.log(Error -> s)
+  def warn(s: String): UIO[Unit] = logger.log(Warn -> s)
+  def info(s: String): UIO[Unit] = logger.log(Info -> s)
+  def debug(s: String): UIO[Unit] = logger.log(Debug -> s)
 
   ////
 
