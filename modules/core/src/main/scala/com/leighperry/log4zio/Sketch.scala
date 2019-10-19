@@ -3,7 +3,6 @@ package com.leighperry.log4zio
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
-import com.leighperry.log4zio.TaggedLogger.{ Debug, Error, Info, Warn }
 import zio.{ UIO, ZIO }
 
 final case class LogWriter[A](log: A => UIO[Unit]) {
@@ -65,16 +64,16 @@ final case class TaggedLogger(prefix: Option[String]) {
   private val logWriter = TaggedLogger.console[String](prefix)
 
   def error(prefix: Option[String], s: String): UIO[Unit] =
-    logWriter.log(Error -> s)
+    logWriter.log(TaggedLogger.Error -> s)
 
   def warn(prefix: Option[String], s: String): UIO[Unit] =
-    logWriter.log(Warn -> s)
+    logWriter.log(TaggedLogger.Warn -> s)
 
   def info(prefix: Option[String], s: String): UIO[Unit] =
-    logWriter.log(Info -> s)
+    logWriter.log(TaggedLogger.Info -> s)
 
   def debug(prefix: Option[String], s: String): UIO[Unit] =
-    logWriter.log(Debug -> s)
+    logWriter.log(TaggedLogger.Debug -> s)
 
 }
 
