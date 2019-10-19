@@ -3,8 +3,8 @@ package com.leighperry.log4zio
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
-import com.leighperry.log4zio.TaggedLogger.{Debug, Error, Info, Warn}
-import zio.{UIO, ZIO}
+import com.leighperry.log4zio.TaggedLogger.{ Debug, Error, Info, Warn }
+import zio.{ UIO, ZIO }
 
 final case class LogWriter[A](log: A => UIO[Unit]) {
 
@@ -17,16 +17,17 @@ final case class LogWriter[A](log: A => UIO[Unit]) {
 }
 
 object RawLogger {
-  def logger[A]: LogWriter[A] =
+  def console[A]: LogWriter[A] =
     LogWriter[A](a => zio.console.Console.Live.console.putStrLn(a.toString)) // TODO toString?
 }
 
 object TaggedLogger {
 
-  def logger[A](prefix: Option[String]): LogWriter[(Level, String)] =
-    writer(prefix).contramapM {
+  def console[A](prefix: Option[String]): LogWriter[(Level, String)] =
+    taggedMessageWriter(prefix).contramapM {
       case (level, message) =>
-        ZIO.effect(LocalDateTime.now)
+        ZIO
+          .effect(LocalDateTime.now)
           .map(timestampFormat.format)
           .catchAll(_ => UIO("(timestamp error)"))
           .map(TaggedMessage(message, level, _))
@@ -41,8 +42,8 @@ object TaggedLogger {
   // TODO message: () => String
   private final case class TaggedMessage[A](message: A, level: Level, timestamp: String)
 
-  private def writer[A](prefix: Option[String]): LogWriter[TaggedMessage[A]] =
-    RawLogger.logger.contramap {
+  private def taggedMessageWriter[A](prefix: Option[String]): LogWriter[TaggedMessage[A]] =
+    RawLogger.console.contramap {
       m =>
         "%s %-5s - %s%s".format(
           m.timestamp,
@@ -61,7 +62,7 @@ object TaggedLogger {
 final case class TaggedLogger(prefix: Option[String]) {
 
   // TODO inject
-  private val logWriter = TaggedLogger.logger[String](prefix)
+  private val logWriter = TaggedLogger.console[String](prefix)
 
   def error(prefix: Option[String], s: String): UIO[Unit] =
     logWriter.log(Error -> s)
