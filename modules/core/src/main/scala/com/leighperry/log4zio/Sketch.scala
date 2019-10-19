@@ -5,29 +5,30 @@ import java.time.format.DateTimeFormatter
 
 import zio.{ Task, UIO, ZIO }
 
-object Sketch {
+final case class Logger[A](log: A => UIO[Unit]) {
 
-  final case class Logger[A](log: A => UIO[Unit]) {
+  def contramap[B](f: B => A): Logger[B] =
+    Logger[B](b => log(f(b)))
 
-    def contramap[B](f: B => A): Logger[B] =
-      Logger[B](b => log(f(b)))
+  def contramapM[B](f: B => UIO[A]): Logger[B] =
+    Logger[B](b => f(b).flatMap(log(_)))
 
-    def contramapM[B](f: B => UIO[A]): Logger[B] =
-      Logger[B](b => f(b).flatMap(log(_)))
+}
 
-  }
-
-  val rawConsole: Logger[String] =
+object RawConsole {
+  val logger: Logger[String] =
     Logger[String](zio.console.Console.Live.console.putStrLn)
+}
 
-  trait Level { val name: String }
-  final object Error extends Level { override val name = "ERROR" }
-  final object Warn extends Level { override val name = "WARN" }
-  final object Info extends Level { override val name = "INFO" }
-  final object Debug extends Level { override val name = "DEBUG" }
+trait Level { val name: String }
+object Error extends Level { override val name = "ERROR" }
+object Warn extends Level { override val name = "WARN" }
+object Info extends Level { override val name = "INFO" }
+object Debug extends Level { override val name = "DEBUG" }
 
-  final case class TaggedMessage(message: String, level: Level, timestamp: String)
+final case class TaggedMessage(message: String, level: Level, timestamp: String)
 
+object TaggedMessage {
   // TODO as part of Log
   val prefix = None
 
@@ -39,14 +40,21 @@ object Sketch {
       m.message
     )
 
-  val taggedMsgConsole: Logger[TaggedMessage] =
-    rawConsole.contramap(formatMessage)
+  val rawLogger: Logger[TaggedMessage] =
+    RawConsole.logger.contramap(formatMessage)
 
-  val msgStdout: Logger[(Level, String)] =
-    taggedMsgConsole.contramapM {
+  val logger: Logger[(Level, String)] =
+    rawLogger.contramapM {
       case (level, message) =>
         timestamp.map(TaggedMessage(message, level, _))
     }
+
+  //// shortcuts
+
+  def error(s: String): UIO[Unit] = logger.log(Error, s)
+  def warn(s: String): UIO[Unit] = logger.log(Warn, s)
+  def info(s: String): UIO[Unit] = logger.log(Info, s)
+  def debug(s: String): UIO[Unit] = logger.log(Debug, s)
 
   ////
 
@@ -57,14 +65,11 @@ object Sketch {
     Task(LocalDateTime.now)
       .map(timestampFormat.format)
       .catchAll(_ => UIO("(timestamp error)"))
-
 }
 
 object XXX extends zio.App {
-  import Sketch._
 
   override def run(args: List[String]): ZIO[zio.ZEnv, Nothing, Int] =
-    msgStdout
-      .log((Info, "asdfa"))
+    (TaggedMessage.info("asdfa") *> TaggedMessage.error("someerror"))
       .map(_ => 1)
 }
