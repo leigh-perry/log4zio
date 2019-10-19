@@ -5,18 +5,22 @@ import java.time.format.DateTimeFormatter
 
 import zio.{ UIO, ZIO }
 
-final case class LogWriter[A](log: A => UIO[Unit]) {
+/**
+ * Encapsulation of log writing to some medium, via `A => UIO[Unit]`
+ */
+final case class LogMedium[A](log: A => UIO[Unit]) {
 
-  def contramap[B](f: B => A): LogWriter[B] =
-    LogWriter[B](b => log(f(b)))
+  def contramap[B](f: B => A): LogMedium[B] =
+    LogMedium[B](b => log(f(b)))
 
-  def contramapM[B](f: B => UIO[A]): LogWriter[B] =
-    LogWriter[B](b => f(b).flatMap(log))
+  def contramapM[B](f: B => UIO[A]): LogMedium[B] =
+    LogMedium[B](b => f(b).flatMap(log))
 
 }
 
-////
-
+/**
+ * Support for conventional JVM-style logging, ie tagged with level and timestamp
+ */
 trait Level { val name: String }
 object Level {
   object Error extends Level { override val name = "ERROR" }
@@ -27,17 +31,19 @@ object Level {
 
 final case class TaggedMessage[A](message: A, level: Level, timestamp: String)
 
-//// output implementations
+//// Log medium writer implementations
 
-object RawLogWriter {
-  def console[A]: LogWriter[A] =
-    LogWriter[A](a => zio.console.Console.Live.console.putStrLn(a.toString)) // TODO toString?
+object RawLogMedium {
+
+  def console[A]: LogMedium[A] =
+    LogMedium[A](a => zio.console.Console.Live.console.putStrLn(a.toString)) // TODO toString?
+  
 }
 
-object TaggedStringLogWriter {
+object TaggedStringLogMedium {
 
-  def console(prefix: Option[String]): LogWriter[(Level, String)] =
-    RawLogWriter
+  def console(prefix: Option[String]): LogMedium[(Level, String)] =
+    RawLogMedium
       .console
       .contramap {
         m: TaggedMessage[String] =>
@@ -63,32 +69,32 @@ object TaggedStringLogWriter {
 
 /**
  * An implementation of conventional logging with levels
- * @param logWriter the output medium for the logging, eg `TaggedStringLogWriter.console`
+ * @param logMedium the output medium for the logging, eg `TaggedStringLogMedium.console`
  */
-final class TaggedLogger private (logWriter: LogWriter[(Level, String)]) {
+final class TaggedLogger private (logMedium: LogMedium[(Level, String)]) {
 
   def error(s: String): UIO[Unit] =
-    logWriter.log(Level.Error -> s)
+    logMedium.log(Level.Error -> s)
 
   def warn(s: String): UIO[Unit] =
-    logWriter.log(Level.Warn -> s)
+    logMedium.log(Level.Warn -> s)
 
   def info(s: String): UIO[Unit] =
-    logWriter.log(Level.Info -> s)
+    logMedium.log(Level.Info -> s)
 
   def debug(s: String): UIO[Unit] =
-    logWriter.log(Level.Debug -> s)
+    logMedium.log(Level.Debug -> s)
 
 }
 
 object TaggedLogger {
-  def apply(logWriter: LogWriter[(Level, String)]): TaggedLogger =
-    new TaggedLogger(logWriter)
+  def apply(logMedium: LogMedium[(Level, String)]): TaggedLogger =
+    new TaggedLogger(logMedium)
 }
 
 object XXX extends zio.App {
 
-  val logger = TaggedLogger(TaggedStringLogWriter.console(Some("an-app")))
+  val logger = TaggedLogger(TaggedStringLogMedium.console(Some("an-app")))
 
   override def run(args: List[String]): ZIO[zio.ZEnv, Nothing, Int] =
     (logger.info("someinfo") *> logger.error("someerror"))
