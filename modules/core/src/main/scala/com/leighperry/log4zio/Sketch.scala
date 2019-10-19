@@ -70,6 +70,6 @@ object TaggedMessage {
 object XXX extends zio.App {
 
   override def run(args: List[String]): ZIO[zio.ZEnv, Nothing, Int] =
-    (TaggedMessage.info("asdfa") *> TaggedMessage.error("someerror"))
+    (TaggedMessage.info("someinfo") *> TaggedMessage.error("someerror"))
       .map(_ => 1)
 }
