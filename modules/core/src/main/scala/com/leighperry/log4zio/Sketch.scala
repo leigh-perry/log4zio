@@ -17,7 +17,7 @@ object Sketch {
 
   }
 
-  val logStdout: LogAction[String] =
+  val rawConsole: LogAction[String] =
     LogAction[String](zio.console.Console.Live.console.putStrLn)
 
   trait Level { val name: String }
@@ -26,12 +26,12 @@ object Sketch {
   final object Info extends Level { override val name = "INFO" }
   final object Debug extends Level { override val name = "DEBUG" }
 
-  final case class LogMsg(message: String, level: Level, timestamp: String)
+  final case class TaggedMessage(message: String, level: Level, timestamp: String)
 
   // TODO as part of Log
   val prefix = None
 
-  def formatMessage(m: LogMsg): String =
+  def formatMessage(m: TaggedMessage): String =
     "%s %-5s - %s%s".format(
       m.timestamp,
       m.level.name,
@@ -39,13 +39,13 @@ object Sketch {
       m.message
     )
 
-  val logMsgStdout: LogAction[LogMsg] =
-    logStdout.contramap(formatMessage)
+  val taggedMsgConsole: LogAction[TaggedMessage] =
+    rawConsole.contramap(formatMessage)
 
-  val logLogMsgStdout: LogAction[(Level, String)] =
-    logMsgStdout.contramapM {
+  val msgStdout: LogAction[(Level, String)] =
+    taggedMsgConsole.contramapM {
       case (level, message) =>
-        timestamp.map(LogMsg(message, level, _))
+        timestamp.map(TaggedMessage(message, level, _))
     }
 
   ////
@@ -64,7 +64,7 @@ object XXX extends zio.App {
   import Sketch._
 
   override def run(args: List[String]): ZIO[zio.ZEnv, Nothing, Int] =
-    logLogMsgStdout
+    msgStdout
       .log((Info, "asdfa"))
       .map(_ => 1)
 }
