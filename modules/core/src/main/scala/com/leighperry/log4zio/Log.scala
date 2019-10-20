@@ -47,8 +47,8 @@ object Log {
             override def debug(s: => String): UIO[Unit] =
               write(s, Level.Debug)
 
-            private def write(s: => String, severity: Level): UIO[Unit] =
-              logMedium.log(Tagged(severity, (() => s)))
+            private def write(s: => String, level: Level): UIO[Unit] =
+              logMedium.log(Tagged(level, (() => s)))
           }
       }
     }

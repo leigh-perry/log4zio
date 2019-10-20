@@ -1,6 +1,6 @@
 package com.leighperry.log4zio.slf4j
 
-import com.leighperry.log4zio.{ Level, Log, LogMedium, Tagged }
+import com.leighperry.log4zio.Log
 import zio.{ UIO, ZIO }
 
 object Slf4jLog {
@@ -8,13 +8,13 @@ object Slf4jLog {
   //// Built-in implementations
 
   def logger(prefix: Option[String]): UIO[Log] = {
-    val slf =
+    val log: ZIO[Any, Throwable, Log] =
       for {
         slfLogger <- ZIO.effect(org.slf4j.LoggerFactory.getLogger(getClass))
-        logger <- make(Slf4jLogMedium.slf4j(prefix, slfLogger))
+        logger <- Log.make(Slf4jLogMedium.slf4j(prefix, slfLogger))
       } yield logger
 
-    slf.catchAll {
+    log.catchAll {
       _ =>
         // fallback on failure
         for {
@@ -23,25 +23,5 @@ object Slf4jLog {
         } yield fb
     }
   }
-
-  def make(logMedium: LogMedium[Tagged[String]]): UIO[Log] =
-    ZIO.succeed {
-      new Log {
-        override def log: Log.Service =
-          new Log.Service {
-            override def error(s: => String): UIO[Unit] =
-              write(s, Level.Error)
-            override def warn(s: => String): UIO[Unit] =
-              write(s, Level.Warn)
-            override def info(s: => String): UIO[Unit] =
-              write(s, Level.Info)
-            override def debug(s: => String): UIO[Unit] =
-              write(s, Level.Debug)
-
-            private def write(s: => String, error1: Level): UIO[Unit] =
-              logMedium.log(Tagged(error1, (() => s)))
-          }
-      }
-    }
 
 }
