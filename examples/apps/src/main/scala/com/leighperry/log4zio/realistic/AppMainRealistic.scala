@@ -1,6 +1,7 @@
 package com.leighperry.log4zio.realistic
 
 import com.leighperry.log4zio.Log
+import com.leighperry.log4zio.slf4j.Slf4jLog
 import zio.blocking.Blocking
 import zio.system.System
 import zio.{ App, UIO, ZIO }
@@ -18,7 +19,7 @@ object AppMainRealistic extends App {
   val appName = "realistic-app"
   override def run(args: List[String]): ZIO[zio.ZEnv, Nothing, Int] =
     for {
-      logsvc <- Log.console(Some(appName))
+      logsvc <- Slf4jLog.logger(Some(appName))
       log = logsvc.log
 
       pgm = for {
@@ -81,7 +82,7 @@ object AppConfig {
 
   def load: ZIO[Any, AppError, AppConfig] =
     ZIO
-      .effect(defaults)
+      .effect(defaults) // TODO dummy implementation
       .mapError(e => AppError.InvalidConfiguration(e.getMessage))
 
   val defaults: AppConfig =

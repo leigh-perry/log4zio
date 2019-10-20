@@ -1,6 +1,6 @@
 package com.leighperry.log4zio
 
-import zio.{UIO, ZIO}
+import zio.{ UIO, ZIO }
 
 trait Log {
   def log: Log.Service
@@ -19,10 +19,10 @@ object Log {
    * to implement fallback behaviour.
    */
   trait Service {
-    def error(s: String): UIO[Unit]
-    def warn(s: String): UIO[Unit]
-    def info(s: String): UIO[Unit]
-    def debug(s: String): UIO[Unit]
+    def error(s: => String): UIO[Unit]
+    def warn(s: => String): UIO[Unit]
+    def info(s: => String): UIO[Unit]
+    def debug(s: => String): UIO[Unit]
   }
 
   //// Built-in implementations
@@ -33,22 +33,22 @@ object Log {
   def silent: ZIO[Any, Nothing, Log] =
     make(TaggedStringLogMedium.silent)
 
-  def make(logMedium: LogMedium[(Level, String)]): UIO[Log] =
+  def make(logMedium: LogMedium[(Level, () => String)]): UIO[Log] =
     ZIO.succeed {
       new Log {
         override def log: Service =
           new Service {
-            override def error(s: String): UIO[Unit] =
-              logMedium.log(Level.Error -> s) // TODO LogStep instead of (,) here?
+            override def error(s: => String): UIO[Unit] =
+              logMedium.log(Level.Error -> (() => s)) // TODO LogStep instead of (,) here?
 
-            override def warn(s: String): UIO[Unit] =
-              logMedium.log(Level.Warn -> s)
+            override def warn(s: => String): UIO[Unit] =
+              logMedium.log(Level.Warn -> (() => s))
 
-            override def info(s: String): UIO[Unit] =
-              logMedium.log(Level.Info -> s)
+            override def info(s: => String): UIO[Unit] =
+              logMedium.log(Level.Info -> (() => s))
 
-            override def debug(s: String): UIO[Unit] =
-              logMedium.log(Level.Debug -> s)
+            override def debug(s: => String): UIO[Unit] =
+              logMedium.log(Level.Debug -> (() => s))
           }
       }
     }

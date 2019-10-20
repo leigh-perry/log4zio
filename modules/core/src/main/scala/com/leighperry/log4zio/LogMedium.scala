@@ -29,8 +29,6 @@ object Level {
   object Debug extends Level { override val name = "DEBUG" }
 }
 
-final case class TaggedMessage[A](message: A, level: Level, timestamp: String)
-
 //// Log medium writer implementations
 
 object RawLogMedium {
@@ -41,63 +39,31 @@ object RawLogMedium {
 }
 
 object TaggedStringLogMedium {
-  def silent: LogMedium[(Level, String)] =
-    LogMedium(_ => ZIO.unit)
+  final case class TimestampedMessage[A](message: () => A, level: Level, timestamp: String)
 
-  def console(prefix: Option[String]): LogMedium[(Level, String)] =
-    RawLogMedium
-      .console
-      .contramap {
-        m: TaggedMessage[String] =>
-          "%s %-5s - %s%s".format(
-            m.timestamp,
-            m.level.name,
-            prefix.fold("")(s => s"$s: "),
-            m.message
-          )
-      }
-      .contramapM {
-        case (level, message) =>
-          ZIO
-            .effect(LocalDateTime.now)
-            .map(timestampFormat.format)
-            .catchAll(_ => UIO("(timestamp error)"))
-            .map(TaggedMessage(message, level, _))
-      }
+  def console(prefix: Option[String]): LogMedium[(Level, () => String)] =
+    RawLogMedium.console // TODO take as arg so can layer on any logmedium, and rename `console`
+    .contramap {
+      m: TimestampedMessage[String] =>
+        "%s %-5s - %s%s".format(
+          m.timestamp,
+          m.level.name,
+          prefix.fold("")(s => s"$s: "),
+          m.message()
+        )
+    }.contramapM {
+      case (level: Level, message: (() => String)) =>
+        ZIO
+          .effect(LocalDateTime.now)
+          .map(timestampFormat.format)
+          .catchAll(_ => UIO("(timestamp error)"))
+          .map(TimestampedMessage(message, level, _))
+    }
+
+  def silent: LogMedium[(Level, () => String)] =
+    LogMedium(_ => ZIO.unit)
 
   private val timestampFormat: DateTimeFormatter =
     DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS")
-}
-
-/*
-final class TaggedLog private (logMedium: LogMedium[(Level, String)]) {
-
-  // TODO move to service
-  def error(s: String): UIO[Unit] =
-    logMedium.log(Level.Error -> s)
-
-  def warn(s: String): UIO[Unit] =
-    logMedium.log(Level.Warn -> s)
-
-  def info(s: String): UIO[Unit] =
-    logMedium.log(Level.Info -> s)
-
-  def debug(s: String): UIO[Unit] =
-    logMedium.log(Level.Debug -> s)
 
 }
-
-object TaggedLog {
-  def apply(logMedium: LogMedium[(Level, String)]): TaggedLog =
-    new TaggedLog(logMedium)
-}
-
-object TestConsoleLog extends zio.App {
-
-  val logger = TaggedLog(TaggedStringLogMedium.console(Some("an-app")))
-
-  override def run(args: List[String]): ZIO[zio.ZEnv, Nothing, Int] =
-    (logger.info("someinfo") *> logger.error("someerror"))
-      .map(_ => 1)
-}
-*/

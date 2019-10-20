@@ -8,6 +8,7 @@ object Dependencies {
     val zio = "1.0.0-RC15"
 
     val scalacheck = "1.14.2"
+    val logback = "1.2.3"
   }
 
 
@@ -15,4 +16,5 @@ object Dependencies {
   val zio = "dev.zio" %% "zio" % Version.zio
 
   val scalacheck = "org.scalacheck" %% "scalacheck" % Version.scalacheck
+  val logback = "ch.qos.logback" % "logback-classic" % Version.logback
 }

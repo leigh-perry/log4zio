@@ -72,10 +72,13 @@ lazy val exampleApps =
     .settings(
       libraryDependencies ++=
         Seq(
-          slf4jApi
+          logback
         )
     )
-    .dependsOn(core % "compile->compile;test->test")
+    .dependsOn(
+      core % "compile->compile;test->test",
+      slf4j % "compile->compile;test->test"
+    )
 
 lazy val allModules = List(core, slf4j, exampleApps)
 
