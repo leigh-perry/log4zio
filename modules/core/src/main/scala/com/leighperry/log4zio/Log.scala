@@ -33,22 +33,22 @@ object Log {
   def silent: ZIO[Any, Nothing, Log] =
     make(TaggedStringLogMedium.silent)
 
-  def make(logMedium: LogMedium[(Level, () => String)]): UIO[Log] =
+  def make(logMedium: LogMedium[Tagged[String]]): UIO[Log] =
     ZIO.succeed {
       new Log {
         override def log: Service =
           new Service {
             override def error(s: => String): UIO[Unit] =
-              logMedium.log(Level.Error -> (() => s)) // TODO LogStep instead of (,) here?
-
+              write(s, Level.Error)
             override def warn(s: => String): UIO[Unit] =
-              logMedium.log(Level.Warn -> (() => s))
-
+              write(s, Level.Warn)
             override def info(s: => String): UIO[Unit] =
-              logMedium.log(Level.Info -> (() => s))
-
+              write(s, Level.Info)
             override def debug(s: => String): UIO[Unit] =
-              logMedium.log(Level.Debug -> (() => s))
+              write(s, Level.Debug)
+
+            private def write(s: => String, severity: Level): UIO[Unit] =
+              logMedium.log(Tagged(severity, (() => s)))
           }
       }
     }

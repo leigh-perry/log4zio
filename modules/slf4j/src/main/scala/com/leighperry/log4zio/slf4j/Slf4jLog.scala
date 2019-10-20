@@ -1,6 +1,6 @@
 package com.leighperry.log4zio.slf4j
 
-import com.leighperry.log4zio.{ Level, Log, LogMedium }
+import com.leighperry.log4zio.{ Level, Log, LogMedium, Tagged }
 import zio.{ UIO, ZIO }
 
 object Slf4jLog {
@@ -24,22 +24,22 @@ object Slf4jLog {
     }
   }
 
-  def make(logMedium: LogMedium[(Level, () => String)]): UIO[Log] =
+  def make(logMedium: LogMedium[Tagged[String]]): UIO[Log] =
     ZIO.succeed {
       new Log {
         override def log: Log.Service =
           new Log.Service {
             override def error(s: => String): UIO[Unit] =
-              logMedium.log(Level.Error -> (() => s))
-
+              write(s, Level.Error)
             override def warn(s: => String): UIO[Unit] =
-              logMedium.log(Level.Warn -> (() => s))
-
+              write(s, Level.Warn)
             override def info(s: => String): UIO[Unit] =
-              logMedium.log(Level.Info -> (() => s))
-
+              write(s, Level.Info)
             override def debug(s: => String): UIO[Unit] =
-              logMedium.log(Level.Debug -> (() => s))
+              write(s, Level.Debug)
+
+            private def write(s: => String, error1: Level): UIO[Unit] =
+              logMedium.log(Tagged(error1, (() => s)))
           }
       }
     }

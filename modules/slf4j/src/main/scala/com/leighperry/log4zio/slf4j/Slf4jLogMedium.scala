@@ -1,17 +1,17 @@
 package com.leighperry.log4zio.slf4j
 
-import com.leighperry.log4zio.{ Level, LogMedium, TaggedStringLogMedium }
+import com.leighperry.log4zio.{ Level, LogMedium, Tagged, TaggedStringLogMedium }
 import zio.ZIO
 
 object Slf4jLogMedium {
 
-  def slf4j(prefix: Option[String], slf: org.slf4j.Logger): LogMedium[(Level, () => String)] = {
+  def slf4j(prefix: Option[String], slf: org.slf4j.Logger): LogMedium[Tagged[String]] = {
     val logger =
-      LogMedium[(Level, () => String)] {
-        a =>
-          val (level: Level, s: (() => String)) = a
+      LogMedium[Tagged[String]] {
+        a: Tagged[String] =>
+          val s = a.message
           val result =
-            level match {
+            a.level match {
               case Level.Error => ZIO.effect(slf.error(s()))
               case Level.Warn => ZIO.effect(slf.warn(s()))
               case Level.Info => ZIO.effect(slf.info(s()))
@@ -25,10 +25,9 @@ object Slf4jLogMedium {
     prefix.fold(logger) {
       sPrefix =>
         logger.contramap {
-          case (level: Level, s: (() => String)) =>
-            (level, () => s"$sPrefix: $s")
+          a: Tagged[String] =>
+            Tagged(a.level, () => s"$sPrefix: ${a.message()}")
         }
     }
-
   }
 }
