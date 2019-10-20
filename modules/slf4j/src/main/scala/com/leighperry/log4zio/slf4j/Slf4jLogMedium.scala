@@ -12,10 +12,14 @@ object Slf4jLogMedium {
           val s = a.message
           val result =
             a.level match {
-              case Level.Error => ZIO.effect(slf.error(s()))
-              case Level.Warn => ZIO.effect(slf.warn(s()))
-              case Level.Info => ZIO.effect(slf.info(s()))
-              case Level.Debug => ZIO.effect(slf.debug(s()))
+              case Level.Error =>
+                ZIO.effect(slf.error(s()))
+              case Level.Warn =>
+                ZIO.effect(slf.warn(s()))
+              case Level.Info =>
+                ZIO.effect(slf.info(s()))
+              case Level.Debug =>
+                ZIO.effect(slf.debug(s()))
             }
           result.catchAll(_ => TaggedStringLogMedium.console(prefix).log(a)) // fallback on write failure
       }
@@ -26,7 +30,7 @@ object Slf4jLogMedium {
       sPrefix =>
         logger.contramap {
           a: Tagged[String] =>
-            Tagged(a.level, () => s"$sPrefix: ${a.message()}")
+            a.copy(message = () => s"$sPrefix: ${a.message()}")
         }
     }
   }

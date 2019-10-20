@@ -2,6 +2,8 @@ package com.leighperry.log4zio
 
 import zio.{ UIO, ZIO }
 
+// TODO example with `final case class SafeString(s: String)` to work out where contravariance can be modelled in API
+
 trait Log {
   def log: Log.Service
 }
