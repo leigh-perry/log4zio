@@ -37,10 +37,12 @@ object RawLogMedium {
 
   def console[A]: LogMedium[A] =
     LogMedium[A](a => zio.console.Console.Live.console.putStrLn(a.toString)) // TODO toString?
-  
+
 }
 
 object TaggedStringLogMedium {
+  def silent: LogMedium[(Level, String)] =
+    LogMedium(_ => ZIO.unit)
 
   def console(prefix: Option[String]): LogMedium[(Level, String)] =
     RawLogMedium
@@ -67,12 +69,10 @@ object TaggedStringLogMedium {
     DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS")
 }
 
-/**
- * An implementation of conventional logging with levels
- * @param logMedium the output medium for the logging, eg `TaggedStringLogMedium.console`
- */
-final class TaggedLogger private (logMedium: LogMedium[(Level, String)]) {
+/*
+final class TaggedLog private (logMedium: LogMedium[(Level, String)]) {
 
+  // TODO move to service
   def error(s: String): UIO[Unit] =
     logMedium.log(Level.Error -> s)
 
@@ -87,16 +87,17 @@ final class TaggedLogger private (logMedium: LogMedium[(Level, String)]) {
 
 }
 
-object TaggedLogger {
-  def apply(logMedium: LogMedium[(Level, String)]): TaggedLogger =
-    new TaggedLogger(logMedium)
+object TaggedLog {
+  def apply(logMedium: LogMedium[(Level, String)]): TaggedLog =
+    new TaggedLog(logMedium)
 }
 
-object XXX extends zio.App {
+object TestConsoleLog extends zio.App {
 
-  val logger = TaggedLogger(TaggedStringLogMedium.console(Some("an-app")))
+  val logger = TaggedLog(TaggedStringLogMedium.console(Some("an-app")))
 
   override def run(args: List[String]): ZIO[zio.ZEnv, Nothing, Int] =
     (logger.info("someinfo") *> logger.error("someerror"))
       .map(_ => 1)
 }
+*/

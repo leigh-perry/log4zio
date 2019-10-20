@@ -54,7 +54,7 @@ lazy val core =
     .settings(
       libraryDependencies ++=
         Seq(
-        )
+          )
     )
 
 lazy val slf4j =
@@ -67,7 +67,17 @@ lazy val slf4j =
     )
     .dependsOn(core % "compile->compile;test->test")
 
-lazy val allModules = List(core, slf4j)
+lazy val exampleApps =
+  subproject(dir = "examples", spName = "apps")
+    .settings(
+      libraryDependencies ++=
+        Seq(
+          slf4jApi
+        )
+    )
+    .dependsOn(core % "compile->compile;test->test")
+
+lazy val allModules = List(core, slf4j, exampleApps)
 
 lazy val root =
   project
@@ -82,9 +92,12 @@ addCommandAlias("fmtcheck", "all scalafmtSbtCheck scalafmtCheck test:scalafmtChe
 ////
 
 def module(moduleName: String): Project =
-  Project(moduleName, file("modules/" + moduleName))
-    .settings(crossBuiltCommonSettings)
+  subproject("modules", moduleName)
     .settings(name += s"-$moduleName") // for artifact naming
+
+def subproject(dir: String, spName: String): Project =
+  Project(spName, file(s"$dir/$spName"))
+    .settings(crossBuiltCommonSettings)
 
 def versionDependentExtraScalacOptions(scalaVersion: String) =
   CrossVersion.partialVersion(scalaVersion) match {

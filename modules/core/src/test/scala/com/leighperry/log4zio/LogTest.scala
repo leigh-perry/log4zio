@@ -1,13 +1,11 @@
 package com.leighperry.log4zio
 
-import com.leighperry.log4zio.Log.LogStep
 import com.leighperry.log4zio.testsupport.TestSupport
-import org.scalacheck.{ Gen, Properties }
-import zio.{ Ref, ZIO }
+import org.scalacheck.Properties
 
 object LogTest extends Properties("LogTest") with TestSupport {
 
-  final case class LogData(
+  /*  final case class LogData(
     appName: Option[String],
     logStrings: List[String],
     logFn: (Log[String], String) => ZIO[Any, Nothing, Unit],
@@ -57,4 +55,5 @@ object LogTest extends Properties("LogTest") with TestSupport {
 
   private def formatMessage(prefix: Option[String], l: LogStep[String]) =
     "%-5s - %s%s".format(l.level, prefix.fold("")(s => s"$s: "), l.message())
+ */
 }
