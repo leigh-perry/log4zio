@@ -20,12 +20,13 @@ object Slf4jLogMedium {
           result.catchAll(_ => TaggedStringLogMedium.console(prefix).log(a)) // fallback on write failure
       }
 
-    // If prefix is specified, contramap with prefix insertion
+    // If prefix is required, contramap this logger with another
+    // stage that handles prefix insertion into the logged string
     prefix.fold(logger) {
-      pref =>
+      sPrefix =>
         logger.contramap {
           case (level: Level, s: (() => String)) =>
-            (level, () => s"$pref: $s")
+            (level, () => s"$sPrefix: $s")
         }
     }
 

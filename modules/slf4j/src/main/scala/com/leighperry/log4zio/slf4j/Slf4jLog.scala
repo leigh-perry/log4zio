@@ -30,7 +30,7 @@ object Slf4jLog {
         override def log: Log.Service =
           new Log.Service {
             override def error(s: => String): UIO[Unit] =
-              logMedium.log(Level.Error -> (() => s)) // TODO LogStep instead of (,) here?
+              logMedium.log(Level.Error -> (() => s))
 
             override def warn(s: => String): UIO[Unit] =
               logMedium.log(Level.Warn -> (() => s))
@@ -43,7 +43,5 @@ object Slf4jLog {
           }
       }
     }
-
-  // TODO contramap with prefix
 
 }

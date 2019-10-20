@@ -82,7 +82,7 @@ object AppConfig {
 
   def load: ZIO[Any, AppError, AppConfig] =
     ZIO
-      .effect(defaults) // TODO dummy implementation
+      .effect(defaults) // dummy implementation
       .mapError(e => AppError.InvalidConfiguration(e.getMessage))
 
   val defaults: AppConfig =

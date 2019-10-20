@@ -34,7 +34,7 @@ object Level {
 object RawLogMedium {
 
   def console[A]: LogMedium[A] =
-    LogMedium[A](a => zio.console.Console.Live.console.putStrLn(a.toString)) // TODO toString?
+    LogMedium[A](a => zio.console.Console.Live.console.putStrLn(a.toString))
 
 }
 
@@ -42,8 +42,13 @@ object TaggedStringLogMedium {
   final case class TimestampedMessage[A](message: () => A, level: Level, timestamp: String)
 
   def console(prefix: Option[String]): LogMedium[(Level, () => String)] =
-    RawLogMedium.console // TODO take as arg so can layer on any logmedium, and rename `console`
-    .contramap {
+    withTags(prefix, RawLogMedium.console)
+
+  def silent: LogMedium[(Level, () => String)] =
+    LogMedium(_ => ZIO.unit)
+
+  def withTags(prefix: Option[String], base: LogMedium[String]): LogMedium[(Level, () => String)] =
+    base.contramap {
       m: TimestampedMessage[String] =>
         "%s %-5s - %s%s".format(
           m.timestamp,
@@ -59,9 +64,6 @@ object TaggedStringLogMedium {
           .catchAll(_ => UIO("(timestamp error)"))
           .map(TimestampedMessage(message, level, _))
     }
-
-  def silent: LogMedium[(Level, () => String)] =
-    LogMedium(_ => ZIO.unit)
 
   private val timestampFormat: DateTimeFormatter =
     DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS")

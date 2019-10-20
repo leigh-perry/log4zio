@@ -5,6 +5,8 @@ import org.scalacheck.Properties
 
 object LogTest extends Properties("LogTest") with TestSupport {
 
+  // TODO implement test
+
   /*  final case class LogData(
     appName: Option[String],
     logStrings: List[String],
