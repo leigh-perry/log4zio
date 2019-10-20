@@ -4,11 +4,11 @@ import com.leighperry.log4zio.Log
 import zio.ZIO
 import zio.blocking.Blocking
 
-object AppMain extends zio.App {
+object AppMainLogging extends zio.App {
 
   final case class AppEnv(log: Log.Service) extends Log with Blocking.Live
 
-  val appName = "some-app"
+  val appName = "logging-app"
   override def run(args: List[String]): ZIO[zio.ZEnv, Nothing, Int] =
     for {
       logsvc <- Log.console(Some(appName))
