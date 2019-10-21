@@ -9,17 +9,16 @@ object Slf4jLogMedium {
     val logger =
       LogMedium[Tagged[String]] {
         a: Tagged[String] =>
-          val s = a.message
           val result =
             a.level match {
               case Level.Error =>
-                ZIO.effect(slf.error(s()))
+                ZIO.effect(slf.error(a.message()))
               case Level.Warn =>
-                ZIO.effect(slf.warn(s()))
+                ZIO.effect(slf.warn(a.message()))
               case Level.Info =>
-                ZIO.effect(slf.info(s()))
+                ZIO.effect(slf.info(a.message()))
               case Level.Debug =>
-                ZIO.effect(slf.debug(s()))
+                ZIO.effect(slf.debug(a.message()))
             }
           result.catchAll(_ => TaggedStringLogMedium.console(prefix).log(a)) // fallback on write failure
       }

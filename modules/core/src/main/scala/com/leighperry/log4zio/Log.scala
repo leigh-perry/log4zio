@@ -2,15 +2,13 @@ package com.leighperry.log4zio
 
 import zio.{ UIO, ZIO }
 
-// TODO example with `final case class SafeString(s: String)` to work out where contravariance can be modelled in API
-
-trait Log {
-  def log: Log.Service
+trait Log[A] {
+  def log: Log.Service[A]
 }
 
 object Log {
-  def log: ZIO[Log, Nothing, Log.Service] =
-    ZIO.access[Log](_.log)
+  def log[A]: ZIO[Log[A], Nothing, Log.Service[A]] =
+    ZIO.access[Log[A]](_.log)
 
   /**
    * An implementation of conventional logging with timestamp and logging level
@@ -20,36 +18,36 @@ object Log {
    * fail altogether. Hence error type `Nothing`. It is the responsibility of `Service` implementations
    * to implement fallback behaviour.
    */
-  trait Service {
-    def error(s: => String): UIO[Unit]
-    def warn(s: => String): UIO[Unit]
-    def info(s: => String): UIO[Unit]
-    def debug(s: => String): UIO[Unit]
+  trait Service[A] {
+    def error(s: => A): UIO[Unit]
+    def warn(s: => A): UIO[Unit]
+    def info(s: => A): UIO[Unit]
+    def debug(s: => A): UIO[Unit]
   }
 
   //// Built-in implementations
 
-  def console(prefix: Option[String]): UIO[Log] =
+  def console[A](prefix: Option[String]): UIO[Log[A]] =
     make(TaggedStringLogMedium.console(prefix))
 
-  def silent: ZIO[Any, Nothing, Log] =
-    make(TaggedStringLogMedium.silent)
+  def silent[A]: ZIO[Any, Nothing, Log[A]] =
+    make[A](TaggedStringLogMedium.silent[A])
 
-  def make(logMedium: LogMedium[Tagged[String]]): UIO[Log] =
+  def make[A](logMedium: LogMedium[Tagged[A]]): UIO[Log[A]] =
     ZIO.succeed {
-      new Log {
-        override def log: Service =
-          new Service {
-            override def error(s: => String): UIO[Unit] =
+      new Log[A] {
+        override def log: Service[A] =
+          new Service[A] {
+            override def error(s: => A): UIO[Unit] =
               write(s, Level.Error)
-            override def warn(s: => String): UIO[Unit] =
+            override def warn(s: => A): UIO[Unit] =
               write(s, Level.Warn)
-            override def info(s: => String): UIO[Unit] =
+            override def info(s: => A): UIO[Unit] =
               write(s, Level.Info)
-            override def debug(s: => String): UIO[Unit] =
+            override def debug(s: => A): UIO[Unit] =
               write(s, Level.Debug)
 
-            private def write(s: => String, level: Level): UIO[Unit] =
+            private def write(s: => A, level: Level): UIO[Unit] =
               logMedium.log(Tagged(level, (() => s)))
           }
       }

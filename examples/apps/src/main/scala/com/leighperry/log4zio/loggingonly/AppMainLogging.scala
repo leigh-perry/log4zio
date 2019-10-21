@@ -2,16 +2,15 @@ package com.leighperry.log4zio.loggingonly
 
 import com.leighperry.log4zio.Log
 import zio.ZIO
-import zio.blocking.Blocking
 
-object AppMainLogging extends zio.App {
+object AppMain extends zio.App {
 
-  final case class AppEnv(log: Log.Service) extends Log with Blocking.Live
+  final case class AppEnv(log: Log.Service[String]) extends Log[String]
 
   val appName = "logging-app"
   override def run(args: List[String]): ZIO[zio.ZEnv, Nothing, Int] =
     for {
-      logsvc <- Log.console(Some(appName))
+      logsvc <- Log.console[String](Some(appName))
       log = logsvc.log
 
       pgm = for {
@@ -27,18 +26,18 @@ object AppMainLogging extends zio.App {
 
 // The core application
 object Application {
-  val doSomething: ZIO[Log, Nothing, Unit] =
+  val doSomething: ZIO[Log[String], Nothing, Unit] =
     for {
-      log <- Log.log
-        _ <- log.info(s"Executing something")
-        _ <- log.info(s"Finished executing something")
+      log <- Log.log[String]
+      _ <- log.info(s"Executing something")
+      _ <- log.info(s"Finished executing something")
     } yield ()
 
-  val execute: ZIO[Log with Blocking, Nothing, Unit] =
+  val execute: ZIO[Log[String], Nothing, Unit] =
     for {
-      log <- Log.log
-        _ <- log.info(s"Starting app")
-        _ <- doSomething
-        _ <- log.info(s"Finished app")
+      log <- Log.log[String]
+      _ <- log.info(s"Starting app")
+      _ <- doSomething
+      _ <- log.info(s"Finished app")
     } yield ()
 }

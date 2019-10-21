@@ -8,10 +8,10 @@ import zio.{ App, UIO, ZIO }
 
 final case class ProgramConfig(inputPath: String, outputPath: String)
 
-object AppMainRealistic extends App {
+object AppMain extends App {
 
-  final case class AppEnv(log: Log.Service, config: Config.Service, spark: Spark.Service)
-    extends Log
+  final case class AppEnv(log: Log.Service[String], config: Config.Service, spark: Spark.Service)
+    extends Log[String]
     with Config
     with Spark
     with Blocking.Live
@@ -165,32 +165,32 @@ object Spark {
 
 // The core application
 object Application {
-  val logSomething: ZIO[Log with Config, Nothing, Unit] =
+  val logSomething: ZIO[Log[String] with Config, Nothing, Unit] =
     for {
       cfg <- ZIO.accessM[Config](_.config.config)
-      log <- Log.log
+      log <- Log.log[String]
       _ <- log.info(s"Executing with parameters ${cfg.kafka} without sparkSession")
     } yield ()
 
-  val runSparkJob: ZIO[Log with Spark with Blocking, Throwable, Unit] =
+  val runSparkJob: ZIO[Log[String] with Spark with Blocking, Throwable, Unit] =
     for {
       session <- ZIO.accessM[Spark](_.spark.spark)
       result <- zio.blocking.effectBlocking(session.slowOp("SELECT something"))
-      log <- Log.log
+      log <- Log.log[String]
       _ <- log.info(s"Executed something with spark ${session.version}: $result")
     } yield ()
 
-  val processData: ZIO[Log with Spark with Config, Throwable, Unit] =
+  val processData: ZIO[Log[String] with Spark with Config, Throwable, Unit] =
     for {
       cfg <- ZIO.accessM[Config](_.config.config)
       spark <- ZIO.accessM[Spark](_.spark.spark)
-      log <- Log.log
+      log <- Log.log[String]
       _ <- log.info(s"Executing ${cfg.kafka} using ${spark.version}")
     } yield ()
 
-  val execute: ZIO[Log with Spark with Config with Blocking, AppError, Unit] =
+  val execute: ZIO[Log[String] with Spark with Config with Blocking, AppError, Unit] =
     for {
-      log <- Log.log
+      log <- Log.log[String]
       cfg <- ZIO.accessM[Config](_.config.config)
       _ <- logSomething
       _ <- runSparkJob.mapError(AppError.exception)
