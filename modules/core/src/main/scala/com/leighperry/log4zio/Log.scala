@@ -10,6 +10,9 @@ object Log {
   def log[A]: ZIO[Log[A], Nothing, Log.Service[A]] =
     ZIO.access[Log[A]](_.log)
 
+  def ofString: ZIO[Log[String], Nothing, Log.Service[String]] =
+    log[String]
+
   /**
    * An implementation of conventional logging with timestamp and logging level
    *

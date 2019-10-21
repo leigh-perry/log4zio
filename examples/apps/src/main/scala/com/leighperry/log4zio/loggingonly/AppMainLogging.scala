@@ -28,14 +28,14 @@ object AppMain extends zio.App {
 object Application {
   val doSomething: ZIO[Log[String], Nothing, Unit] =
     for {
-      log <- Log.log[String]
+      log <- Log.ofString
       _ <- log.info(s"Executing something")
       _ <- log.info(s"Finished executing something")
     } yield ()
 
   val execute: ZIO[Log[String], Nothing, Unit] =
     for {
-      log <- Log.log[String]
+      log <- Log.ofString
       _ <- log.info(s"Starting app")
       _ <- doSomething
       _ <- log.info(s"Finished app")
