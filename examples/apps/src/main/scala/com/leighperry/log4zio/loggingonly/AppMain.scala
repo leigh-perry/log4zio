@@ -8,14 +8,13 @@ object AppMain extends zio.App {
   final case class AppEnv(log: Log.Service[String]) extends Log[String]
 
   val appName = "logging-app"
+
   override def run(args: List[String]): ZIO[zio.ZEnv, Nothing, Int] =
     for {
       logsvc <- Log.console[String](Some(appName))
       log = logsvc.log
 
-      pgm = for {
-        _ <- Application.execute.provide(AppEnv(log))
-      } yield ()
+      pgm = Application.execute.provide(AppEnv(log))
 
       exitCode <- pgm.foldM(
         e => log.error(s"Application failed: $e") *> ZIO.succeed(1),

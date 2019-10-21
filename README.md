@@ -1,31 +1,35 @@
-# Log4zio
+# log4zio
 
 # Introduction
 
-This logging library targets error-free composability.
+This library targets error-free, composable logger creation.
 
-1. This interface assumes that the user doesn't want to experience logging failures.
+1. The `log4zio` interface assumes that the user doesn't want to experience logging failures.
 Logging is most important under failure conditions, so it is best to log via a 
-fallback mechanism rather than fail altogether. 
+fallback mechanism rather than fail altogether.
 
 1. The library lets the user create a new logging capability by composing refinements on top of 
 a base logging implementation.
 
-## Contravariant logging
+## Contravariant composition
 
-For instance, if you have a simple logger to the console, you can create a logger
+Contravariant composition allows you to, if you have a simple-text console logger, create a logger
 that includes a timestamp on every message.
-Or you can create a logger that encodes as JSON, writing the JSON data out to a string logger.
+Or, it means that you can create a logger that encodes as JSON, writing the JSON data out to a string logger.
 Alternatively, you can create a logger that accepts only a specialised `SafeString` data type
-for its log messages – this is easy since the `SafeString` can be converted to `String` for 
-the final log-writing phase.
+for its log messages. Implementing this is easy since the `SafeString` can be converted to `String` for 
+the log-writing phase. Or perhaps all your log messages take the form of an integer code, and you 
+want to be able to merely call `log.info(101)` to write whatever that means to your log.
 
-This compositional behaviour is that of a *contravariant functor*.
+This compositional behaviour is that of a *contravariant functor* for the `LogMedium` class.
 `Contravariant` functors are characterised by the `contramap` method:
 
 ```scala
   def contramap[B](f: B => A): LogMedium[B] = ...
 ```
+
+It says, if you have a `LogMedium` for type `A`, contramap will give you a `LogMedium` for any `B`, so 
+long as you can convert your `B` to an `A`.
 
 # Components
 
@@ -108,7 +112,87 @@ for this case.
 
 # Examples
 
-TODO... write this
+Example programs can be [found here](./examples/apps/src/main/scala/com/leighperry/log4zio).
+
+## Logging in an application
+
+```scala
+object AppMain extends zio.App {
+
+  final case class AppEnv(log: Log.Service[String]) extends Log[String]
+
+  val appName = "logging-app"
+  
+  override def run(args: List[String]): ZIO[zio.ZEnv, Nothing, Int] =
+    for {
+      logsvc <- Log.console[String](Some(appName))
+      log = logsvc.log
+      pgm = Application.execute.provide(AppEnv(log))
+      :
+    } yield 0
+
+  val doSomething: ZIO[Log[String], Nothing, Unit] =
+    for {
+      log <- Log.stringLog
+      _ <- log.info(s"Executing something")
+      _ <- log.info(s"Finished executing something")
+    } yield ()
+
+  val execute: ZIO[Log[String], Nothing, Unit] =
+    for {
+      log <- Log.stringLog
+      _ <- log.info(s"Starting app")
+      _ <- doSomething
+      _ <- log.info(s"Finished app")
+    } yield ()
+}
+```
+
+A more realistic sample application using SLF4J logging is [found here](./examples/apps/src/main/scala/com/leighperry/log4zio/realistic/AppMain.scala).
+
+## Logging Int messages
+
+You probably won't do this using `Int` logging, but custom error types can be created by `contramap`-ing a string-based logger:
+```scala
+object AppMain extends zio.App {
+
+  def intLogger: UIO[Log[Int]] =
+    Log.make[Int](intRendered(RawLogMedium.console))
+
+  def intRendered(base: LogMedium[String]): LogMedium[Tagged[Int]] =
+    base.contramap {
+      m: Tagged[Int] =>
+        val n: Int = m.message()
+        "%-5s - %d:%s".format(m.level.name, n, "x" * n)
+    }
+
+  final case class AppEnv(log: Log.Service[Int]) extends Log[Int]
+
+  override def run(args: List[String]): ZIO[zio.ZEnv, Nothing, Int] =
+    for {
+      logsvc <- intLogger
+      log = logsvc.log
+      pgm = execute.provide(AppEnv(log))
+      :
+    } yield 0
+
+  val doSomething: ZIO[Log[Int], Nothing, Unit] =
+    for {
+      log <- Log.log[Int]
+      _ <- log.info(1)
+      _ <- log.info(2)
+    } yield ()
+
+  val execute: ZIO[Log[Int], Nothing, Unit] =
+    for {
+      log <- Log.log[Int]
+      _ <- log.info(3)
+      _ <- doSomething
+      _ <- log.info(4)
+    } yield ()
+}
+```
+
 
 # Release
 

@@ -5,10 +5,8 @@ import zio.{ UIO, ZIO }
 
 object AppMain extends zio.App {
 
-  def intLogger: UIO[Log[Int]] = {
-    val value: LogMedium[Tagged[Int]] = intRendered(RawLogMedium.console)
-    Log.make[Int](value)
-  }
+  def intLogger: UIO[Log[Int]] =
+    Log.make[Int](intRendered(RawLogMedium.console))
 
   def intRendered(base: LogMedium[String]): LogMedium[Tagged[Int]] =
     base.contramap {
@@ -24,9 +22,7 @@ object AppMain extends zio.App {
       logsvc <- intLogger
       log = logsvc.log
 
-      pgm = for {
-        _ <- Application.execute.provide(AppEnv(log))
-      } yield ()
+      pgm = Application.execute.provide(AppEnv(log))
 
       exitCode <- pgm.foldM(
         e => log.error(11) *> ZIO.succeed(1),
