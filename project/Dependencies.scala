@@ -11,7 +11,6 @@ object Dependencies {
     val logback = "1.2.3"
   }
 
-
   val slf4jApi = "org.slf4j" % "slf4j-api" % Version.slf4jApi
   val zio = "dev.zio" %% "zio" % Version.zio
 
