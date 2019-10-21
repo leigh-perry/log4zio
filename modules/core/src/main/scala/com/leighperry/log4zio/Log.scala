@@ -10,7 +10,7 @@ object Log {
   def log[A]: ZIO[Log[A], Nothing, Log.Service[A]] =
     ZIO.access[Log[A]](_.log)
 
-  def ofString: ZIO[Log[String], Nothing, Log.Service[String]] =
+  def stringLog: ZIO[Log[String], Nothing, Log.Service[String]] =
     log[String]
 
   /**

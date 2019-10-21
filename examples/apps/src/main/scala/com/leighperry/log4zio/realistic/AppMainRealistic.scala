@@ -168,7 +168,7 @@ object Application {
   val logSomething: ZIO[Log[String] with Config, Nothing, Unit] =
     for {
       cfg <- ZIO.accessM[Config](_.config.config)
-      log <- Log.ofString
+      log <- Log.stringLog
       _ <- log.info(s"Executing with parameters ${cfg.kafka} without sparkSession")
     } yield ()
 
@@ -176,7 +176,7 @@ object Application {
     for {
       session <- ZIO.accessM[Spark](_.spark.spark)
       result <- zio.blocking.effectBlocking(session.slowOp("SELECT something"))
-      log <- Log.ofString
+      log <- Log.stringLog
       _ <- log.info(s"Executed something with spark ${session.version}: $result")
     } yield ()
 
@@ -184,13 +184,13 @@ object Application {
     for {
       cfg <- ZIO.accessM[Config](_.config.config)
       spark <- ZIO.accessM[Spark](_.spark.spark)
-      log <- Log.ofString
+      log <- Log.stringLog
       _ <- log.info(s"Executing ${cfg.kafka} using ${spark.version}")
     } yield ()
 
   val execute: ZIO[Log[String] with Spark with Config with Blocking, AppError, Unit] =
     for {
-      log <- Log.ofString
+      log <- Log.stringLog
       cfg <- ZIO.accessM[Config](_.config.config)
       _ <- logSomething
       _ <- runSparkJob.mapError(AppError.exception)
