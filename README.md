@@ -51,7 +51,7 @@ Eg:
 final case class Tagged[A](level: Level, message: () => A)
 
 object TaggedStringLogMedium {
-  final case class TimestampedMessage[A](message: () => A, level: Level, timestamp: String)
+  final case class TimestampedMessage[A](level: Level, message: () => A, timestamp: String)
 
   def console[A](prefix: Option[String]): LogMedium[Tagged[A]] =
     withTags(prefix, RawLogMedium.console)
@@ -74,7 +74,7 @@ object TaggedStringLogMedium {
           .effect(LocalDateTime.now)
           .map(timestampFormat.format)
           .catchAll(_ => UIO("(timestamp error)"))
-          .map(TimestampedMessage[A](a.message, a.level, _))
+          .map(TimestampedMessage[A](a.level, a.message, _))
     }
 }
 ```
