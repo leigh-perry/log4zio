@@ -42,15 +42,15 @@ object Log {
         override def log: Service[A] =
           new Service[A] {
             override def error(s: => A): UIO[Unit] =
-              write(s, Level.Error)
+              write(Level.Error, s)
             override def warn(s: => A): UIO[Unit] =
-              write(s, Level.Warn)
+              write(Level.Warn, s)
             override def info(s: => A): UIO[Unit] =
-              write(s, Level.Info)
+              write(Level.Info, s)
             override def debug(s: => A): UIO[Unit] =
-              write(s, Level.Debug)
+              write(Level.Debug, s)
 
-            private def write(s: => A, level: Level): UIO[Unit] =
+            private def write(level: Level, s: => A) =
               logMedium.log(Tagged(level, (() => s)))
           }
       }
