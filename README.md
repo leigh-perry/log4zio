@@ -197,7 +197,7 @@ object AppMain extends zio.App {
 # Release
 
 ```bash
-VERS=0.1.1
+VERS=0.2.0
 git tag -a v${VERS} -m "v${VERS}"
 git push origin v${VERS}
 ```
