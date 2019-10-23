@@ -3,18 +3,18 @@ package com.leighperry.log4zio
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
-import zio.{ UIO, ZIO }
+import zio.{ IO, UIO, ZIO }
 
 /**
  * Encapsulation of log writing to some medium, via `A => UIO[Unit]`
  */
-final case class LogMedium[E, A](log: A => UIO[Unit]) {
+final case class LogMedium[E, A](log: A => IO[E, Unit]) {
 
-  def contramap[E2, B](f: B => A): LogMedium[E2, B] =
-    LogMedium[E2, B](b => log(f(b)))
+  def contramap[B](f: B => A): LogMedium[E, B] =
+    LogMedium[E, B](b => log(f(b)))
 
-  def contramapM[E2, B](f: B => UIO[A]): LogMedium[E2, B] =
-    LogMedium[E2, B](b => f(b).flatMap(log))
+  def contramapM[E1 >: E, B](f: B => IO[E1, A]): LogMedium[E1, B] =
+    LogMedium[E1, B](b => f(b).flatMap(log))
 
 }
 
@@ -40,7 +40,7 @@ object RawLogMedium {
 
 final case class Tagged[A](level: Level, message: () => A)
 
-object TaggedStringLogMedium {
+object TaggedLogMedium {
   final case class TimestampedMessage[A](level: Level, message: () => A, timestamp: String)
 
   def console[E, A](prefix: Option[String]): LogMedium[E, Tagged[A]] =
@@ -49,23 +49,30 @@ object TaggedStringLogMedium {
   def silent[A]: LogMedium[Nothing, Tagged[A]] =
     LogMedium(_ => ZIO.unit)
 
-  def withTags[E, A](prefix: Option[String], base: LogMedium[Nothing, String]): LogMedium[E, Tagged[A]] =
-    base.contramap {
-      m: TimestampedMessage[A] =>
-        "%s %-5s - %s%s".format(
-          m.timestamp,
-          m.level.name,
-          prefix.fold("")(s => s"$s: "),
-          m.message()
-        )
-    }.contramapM {
-      a: Tagged[A] =>
-        ZIO
-          .effect(LocalDateTime.now)
-          .map(timestampFormat.format)
-          .catchAll(_ => UIO("(timestamp error)"))
-          .map(TimestampedMessage[A](a.level, a.message, _))
-    }
+  def withTags[E, A](
+    prefix: Option[String],
+    base: LogMedium[Nothing, String]
+  ): LogMedium[E, Tagged[A]] =
+    base
+      .contramap[TimestampedMessage[A]](taggedTimestamped(prefix))
+      .contramapM[E, Tagged[A]](tagged)
+
+  def tagged[A, E]: Tagged[A] => ZIO[Any, Nothing, TimestampedMessage[A]] =
+    (a: Tagged[A]) =>
+      ZIO
+        .effect(LocalDateTime.now)
+        .map(timestampFormat.format)
+        .catchAll(_ => UIO("(timestamp error)"))
+        .map(TimestampedMessage[A](a.level, a.message, _))
+
+  def taggedTimestamped[A](prefix: Option[String]): TimestampedMessage[A] => String =
+    (m: TimestampedMessage[A]) =>
+      "%s %-5s - %s%s".format(
+        m.timestamp,
+        m.level.name,
+        prefix.fold("")(s => s"$s: "),
+        m.message()
+      )
 
   private val timestampFormat: DateTimeFormatter =
     DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS")

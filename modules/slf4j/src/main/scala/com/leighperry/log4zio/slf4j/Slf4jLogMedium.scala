@@ -1,6 +1,6 @@
 package com.leighperry.log4zio.slf4j
 
-import com.leighperry.log4zio.{ Level, LogMedium, Tagged, TaggedStringLogMedium }
+import com.leighperry.log4zio.{ Level, LogMedium, Tagged, TaggedLogMedium }
 import zio.ZIO
 
 object Slf4jLogMedium {
@@ -20,7 +20,7 @@ object Slf4jLogMedium {
               case Level.Debug =>
                 ZIO.effect(slf.debug(a.message()))
             }
-          result.catchAll(_ => TaggedStringLogMedium.console(prefix).log(a)) // fallback on write failure
+          result.catchAll(_ => TaggedLogMedium.console(prefix).log(a)) // fallback on write failure
       }
 
     // If prefix is required, contramap this logger with another

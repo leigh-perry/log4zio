@@ -21,7 +21,6 @@ object Log {
    * fail altogether. Hence error type `Nothing`. It is the responsibility of `Service` implementations
    * to implement fallback behaviour.
    */
-  // TODO parameterise by Error to allow safe and unsafe versions?
   trait Service[E, A] {
     def error(s: => A): IO[E, Unit]
     def warn(s: => A): IO[E, Unit]
@@ -32,10 +31,10 @@ object Log {
   //// Built-in implementations
 
   def console[E, A](prefix: Option[String]): IO[E, Log[E, A]] =
-    make(TaggedStringLogMedium.console(prefix))
+    make(TaggedLogMedium.console(prefix))
 
   def silent[A]: ZIO[Any, Nothing, Log[Nothing, A]] =
-    make[Nothing, A](TaggedStringLogMedium.silent[A])
+    make[Nothing, A](TaggedLogMedium.silent[A])
 
   // TODO `LogMedium` could be `R` here
   def make[E, A](logMedium: LogMedium[E, Tagged[A]]): IO[E, Log[E, A]] =
