@@ -9,7 +9,7 @@ object LogTest extends Properties("LogTest") with TestSupport {
   final case class LogData(
     appName: Option[String],
     logStrings: List[String],
-    logFn: (Log[String], String) => ZIO[Any, Nothing, Unit],
+    logFn: (Log[Nothing, String], String) => ZIO[Any, Nothing, Unit],
     level: Level
   )
 
@@ -19,10 +19,10 @@ object LogTest extends Properties("LogTest") with TestSupport {
       scount <- Gen.chooseNum[Int](0, 20)
       strings <- Gen.listOfN(scount, genFor[String])
       logAction <- Gen.oneOf(
-        ((log: Log[String], s: String) => log.log.error(s), Level.Error),
-        ((log: Log[String], s: String) => log.log.warn(s), Level.Warn),
-        ((log: Log[String], s: String) => log.log.info(s), Level.Info),
-        ((log: Log[String], s: String) => log.log.debug(s), Level.Debug)
+        ((log: Log[Nothing, String], s: String) => log.log.error(s), Level.Error),
+        ((log: Log[Nothing, String], s: String) => log.log.warn(s), Level.Warn),
+        ((log: Log[Nothing, String], s: String) => log.log.info(s), Level.Info),
+        ((log: Log[Nothing, String], s: String) => log.log.debug(s), Level.Debug)
       )
     } yield LogData(appName, strings, logAction._1, logAction._2)
 
@@ -42,12 +42,12 @@ object LogTest extends Properties("LogTest") with TestSupport {
 
   private def testLogger(
     prefix: Option[String]
-  ): ZIO[Any, Nothing, (Ref[List[String]], Log[String])] =
+  ): ZIO[Any, Nothing, (Ref[List[String]], Log[Nothing, String])] =
     for {
       entries <- Ref.make(List.empty[String])
-      testMedium = LogMedium[String](a => entries.update(a :: _).unit)
+      testMedium = LogMedium[Nothing, String](a => entries.update(a :: _).unit)
       taggedTestMedium = testMedium.contramap(formatMessage(prefix, (_: Tagged[String])))
-      log <- Log.make[String](taggedTestMedium)
+      log <- Log.make[Nothing, String](taggedTestMedium)
     } yield (entries, log)
 
   private def formatMessage(prefix: Option[String], m: Tagged[String]) =

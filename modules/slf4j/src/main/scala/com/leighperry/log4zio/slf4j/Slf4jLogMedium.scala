@@ -5,9 +5,9 @@ import zio.ZIO
 
 object Slf4jLogMedium {
 
-  def slf4j(prefix: Option[String], slf: org.slf4j.Logger): LogMedium[Tagged[String]] = {
+  def slf4j(prefix: Option[String], slf: org.slf4j.Logger): LogMedium[Nothing, Tagged[String]] = {
     val logger =
-      LogMedium[Tagged[String]] {
+      LogMedium[Nothing, Tagged[String]] {
         a: Tagged[String] =>
           val result =
             a.level match {

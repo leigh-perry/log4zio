@@ -8,13 +8,13 @@ import zio.{ UIO, ZIO }
 /**
  * Encapsulation of log writing to some medium, via `A => UIO[Unit]`
  */
-final case class LogMedium[A](log: A => UIO[Unit]) {
+final case class LogMedium[E, A](log: A => UIO[Unit]) {
 
-  def contramap[B](f: B => A): LogMedium[B] =
-    LogMedium[B](b => log(f(b)))
+  def contramap[E2, B](f: B => A): LogMedium[E2, B] =
+    LogMedium[E2, B](b => log(f(b)))
 
-  def contramapM[B](f: B => UIO[A]): LogMedium[B] =
-    LogMedium[B](b => f(b).flatMap(log))
+  def contramapM[E2, B](f: B => UIO[A]): LogMedium[E2, B] =
+    LogMedium[E2, B](b => f(b).flatMap(log))
 
 }
 
@@ -33,8 +33,8 @@ object Level {
 
 object RawLogMedium {
 
-  def console: LogMedium[String] =
-    LogMedium[String](zio.console.Console.Live.console.putStrLn)
+  def console: LogMedium[Nothing, String] =
+    LogMedium[Nothing, String](zio.console.Console.Live.console.putStrLn)
 
 }
 
@@ -43,13 +43,13 @@ final case class Tagged[A](level: Level, message: () => A)
 object TaggedStringLogMedium {
   final case class TimestampedMessage[A](level: Level, message: () => A, timestamp: String)
 
-  def console[A](prefix: Option[String]): LogMedium[Tagged[A]] =
+  def console[E, A](prefix: Option[String]): LogMedium[E, Tagged[A]] =
     withTags(prefix, RawLogMedium.console)
 
-  def silent[A]: LogMedium[Tagged[A]] =
+  def silent[A]: LogMedium[Nothing, Tagged[A]] =
     LogMedium(_ => ZIO.unit)
 
-  def withTags[A](prefix: Option[String], base: LogMedium[String]): LogMedium[Tagged[A]] =
+  def withTags[E, A](prefix: Option[String], base: LogMedium[Nothing, String]): LogMedium[E, Tagged[A]] =
     base.contramap {
       m: TimestampedMessage[A] =>
         "%s %-5s - %s%s".format(

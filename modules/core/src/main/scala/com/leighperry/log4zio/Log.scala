@@ -1,17 +1,17 @@
 package com.leighperry.log4zio
 
-import zio.{ UIO, ZIO }
+import zio.{ IO, UIO, ZIO }
 
-trait Log[A] {
-  def log: Log.Service[A]
+trait Log[E, A] {
+  def log: Log.Service[E, A]
 }
 
 object Log {
-  def log[A]: ZIO[Log[A], Nothing, Log.Service[A]] =
-    ZIO.access[Log[A]](_.log)
+  def log[E, A]: ZIO[Log[E, A], Nothing, Log.Service[E, A]] =
+    ZIO.access[Log[E, A]](_.log)
 
-  def stringLog: ZIO[Log[String], Nothing, Log.Service[String]] =
-    log[String]
+  def stringLog: ZIO[Log[Nothing, String], Nothing, Log.Service[Nothing, String]] =
+    log[Nothing, String]
 
   /**
    * An implementation of conventional logging with timestamp and logging level
@@ -21,26 +21,28 @@ object Log {
    * fail altogether. Hence error type `Nothing`. It is the responsibility of `Service` implementations
    * to implement fallback behaviour.
    */
-  trait Service[A] {
-    def error(s: => A): UIO[Unit]
-    def warn(s: => A): UIO[Unit]
-    def info(s: => A): UIO[Unit]
-    def debug(s: => A): UIO[Unit]
+  // TODO parameterise by Error to allow safe and unsafe versions?
+  trait Service[E, A] {
+    def error(s: => A): IO[E, Unit]
+    def warn(s: => A): IO[E, Unit]
+    def info(s: => A): IO[E, Unit]
+    def debug(s: => A): IO[E, Unit]
   }
 
   //// Built-in implementations
 
-  def console[A](prefix: Option[String]): UIO[Log[A]] =
+  def console[E, A](prefix: Option[String]): IO[E, Log[E, A]] =
     make(TaggedStringLogMedium.console(prefix))
 
-  def silent[A]: ZIO[Any, Nothing, Log[A]] =
-    make[A](TaggedStringLogMedium.silent[A])
+  def silent[A]: ZIO[Any, Nothing, Log[Nothing, A]] =
+    make[Nothing, A](TaggedStringLogMedium.silent[A])
 
-  def make[A](logMedium: LogMedium[Tagged[A]]): UIO[Log[A]] =
+  // TODO `LogMedium` could be `R` here
+  def make[E, A](logMedium: LogMedium[E, Tagged[A]]): UIO[Log[E, A]] =
     ZIO.succeed {
-      new Log[A] {
-        override def log: Service[A] =
-          new Service[A] {
+      new Log[E, A] {
+        override def log: Service[E, A] =
+          new Service[E, A] {
             override def error(s: => A): UIO[Unit] =
               write(Level.Error, s)
             override def warn(s: => A): UIO[Unit] =
