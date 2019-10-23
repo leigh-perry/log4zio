@@ -38,18 +38,18 @@ object Log {
     make[Nothing, A](TaggedStringLogMedium.silent[A])
 
   // TODO `LogMedium` could be `R` here
-  def make[E, A](logMedium: LogMedium[E, Tagged[A]]): UIO[Log[E, A]] =
+  def make[E, A](logMedium: LogMedium[E, Tagged[A]]): IO[E, Log[E, A]] =
     ZIO.succeed {
       new Log[E, A] {
         override def log: Service[E, A] =
           new Service[E, A] {
-            override def error(s: => A): UIO[Unit] =
+            override def error(s: => A): IO[E, Unit] =
               write(Level.Error, s)
-            override def warn(s: => A): UIO[Unit] =
+            override def warn(s: => A): IO[E, Unit] =
               write(Level.Warn, s)
-            override def info(s: => A): UIO[Unit] =
+            override def info(s: => A): IO[E, Unit] =
               write(Level.Info, s)
-            override def debug(s: => A): UIO[Unit] =
+            override def debug(s: => A): IO[E, Unit] =
               write(Level.Debug, s)
 
             private def write(level: Level, s: => A) =
