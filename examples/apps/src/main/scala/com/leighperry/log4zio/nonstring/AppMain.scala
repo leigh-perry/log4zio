@@ -1,12 +1,12 @@
 package com.leighperry.log4zio.nonstring
 
-import com.leighperry.log4zio.{ Log, LogMedium, RawLogMedium, Tagged }
-import zio.{ UIO, ZIO }
+import com.leighperry.log4zio.{Log, LogE, LogMedium, RawLogMedium, Tagged}
+import zio.{UIO, ZIO}
 
 object AppMain extends zio.App {
 
-  def intLogger: UIO[Log[Nothing, Int]] =
-    Log.make[Nothing, Int](intRendered(RawLogMedium.console))
+  def intLogger: UIO[Log[Int]] =
+    LogE.make[Nothing, Int](intRendered(RawLogMedium.console))
 
   def intRendered(base: LogMedium[Nothing, String]): LogMedium[Nothing, Tagged[Int]] =
     base.contramap {
@@ -15,7 +15,7 @@ object AppMain extends zio.App {
         "%-5s - %d:%s".format(m.level.name, n, "x" * n)
     }
 
-  final case class AppEnv(log: Log.Service[Nothing, Int]) extends Log[Nothing, Int]
+  final case class AppEnv(log: LogE.Service[Nothing, Int]) extends Log[Int]
 
   override def run(args: List[String]): ZIO[zio.ZEnv, Nothing, Int] =
     for {
@@ -24,25 +24,22 @@ object AppMain extends zio.App {
 
       pgm = Application.execute.provide(AppEnv(log))
 
-      exitCode <- pgm.foldM(
-        e => log.error(11) *> ZIO.succeed(1),
-        _ => log.info(10) *> ZIO.succeed(0)
-      )
+      exitCode <- pgm *> log.info(10) *> ZIO.succeed(0)
     } yield exitCode
 }
 
 // The core application
 object Application {
-  val doSomething: ZIO[Log[Nothing, Int], Nothing, Unit] =
+  val doSomething: ZIO[Log[Int], Nothing, Unit] =
     for {
-      log <- Log.log[Nothing, Int]
+      log <- LogE.log[Nothing, Int]
       _ <- log.info(1)
       _ <- log.info(2)
     } yield ()
 
-  val execute: ZIO[Log[Nothing, Int], Nothing, Unit] =
+  val execute: ZIO[Log[Int], Nothing, Unit] =
     for {
-      log <- Log.log[Nothing, Int]
+      log <- LogE.log[Nothing, Int]
       _ <- log.info(3)
       _ <- doSomething
       _ <- log.info(4)

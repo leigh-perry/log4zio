@@ -1,16 +1,16 @@
 package com.leighperry.log4zio
 
-import zio.{ IO, UIO, ZIO }
+import zio.{ IO, ZIO }
 
-trait Log[E, A] {
-  def log: Log.Service[E, A]
+trait LogE[E, A] {
+  def log: LogE.Service[E, A]
 }
 
-object Log {
-  def log[E, A]: ZIO[Log[E, A], Nothing, Log.Service[E, A]] =
-    ZIO.access[Log[E, A]](_.log)
+object LogE {
+  def log[E, A]: ZIO[LogE[E, A], Nothing, LogE.Service[E, A]] =
+    ZIO.access[LogE[E, A]](_.log)
 
-  def stringLog: ZIO[Log[Nothing, String], Nothing, Log.Service[Nothing, String]] =
+  def stringLog: ZIO[LogE[Nothing, String], Nothing, LogE.Service[Nothing, String]] =
     log[Nothing, String]
 
   /**
@@ -30,19 +30,19 @@ object Log {
 
   //// Built-in implementations
 
-  def console[A](prefix: Option[String]): IO[Throwable, Log[Throwable, A]] =
+  def console[A](prefix: Option[String]): IO[Throwable, LogE[Throwable, A]] =
     make[Throwable, A](TaggedLogMedium.console(prefix))
 
-  def safeConsole[A](prefix: Option[String]): IO[Nothing, Log[Nothing, A]] =
+  def safeConsole[A](prefix: Option[String]): IO[Nothing, LogE[Nothing, A]] =
     make[Nothing, A](TaggedLogMedium.safeConsole(prefix))
 
-  def silent[A]: ZIO[Any, Nothing, Log[Nothing, A]] =
+  def silent[A]: ZIO[Any, Nothing, LogE[Nothing, A]] =
     make[Nothing, A](TaggedLogMedium.silent[A])
 
   // TODO `LogMedium` could be `R` here
-  def make[E, A](logMedium: LogMedium[E, Tagged[A]]): IO[E, Log[E, A]] =
+  def make[E, A](logMedium: LogMedium[E, Tagged[A]]): IO[E, LogE[E, A]] =
     ZIO.succeed {
-      new Log[E, A] {
+      new LogE[E, A] {
         override def log: Service[E, A] =
           new Service[E, A] {
             override def error(s: => A): IO[E, Unit] =
