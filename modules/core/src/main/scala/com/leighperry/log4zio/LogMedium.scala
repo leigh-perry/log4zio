@@ -9,12 +9,14 @@ import zio.{ IO, ZIO }
  * Encapsulation of log writing to some medium, via `A => UIO[Unit]`
  */
 final case class LogMedium[E, A](log: A => IO[E, Unit]) {
-
   def contramap[B](f: B => A): LogMedium[E, B] =
     LogMedium[E, B](b => log(f(b)))
 
   def contramapM[E1 >: E, B](f: B => IO[E1, A]): LogMedium[E1, B] =
     LogMedium[E1, B](b => f(b).flatMap(log))
+
+  def withFallback[E1](fb: A => IO[E1, Unit]): LogMedium[E1, A] =
+    LogMedium[E1, A](a => log(a).catchAll(_ => fb(a)))
 
 }
 
@@ -36,6 +38,9 @@ object RawLogMedium {
   def console: LogMedium[Nothing, String] =
     LogMedium[Nothing, String](zio.console.Console.Live.console.putStrLn)
 
+  def silent[A]: LogMedium[Nothing, String] =
+    LogMedium(_ => ZIO.unit)
+
 }
 
 final case class Tagged[A](level: Level, message: () => A)
@@ -51,6 +56,8 @@ object TaggedLogMedium {
 
   def silent[A]: LogMedium[Nothing, Tagged[A]] =
     LogMedium(_ => ZIO.unit)
+
+  ////
 
   def withTags[A](
     prefix: Option[String],

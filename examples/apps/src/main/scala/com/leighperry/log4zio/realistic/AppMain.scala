@@ -19,7 +19,7 @@ object AppMain extends App {
   val appName = "realistic-app"
   override def run(args: List[String]): ZIO[zio.ZEnv, Nothing, Int] =
     for {
-      logsvc <- Slf4jLog.logger(Some(appName))
+      logsvc <- Slf4jLog.safeLogger(Some(appName))
       log = logsvc.log
 
       pgm = for {
