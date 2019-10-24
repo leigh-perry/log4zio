@@ -48,18 +48,18 @@ final case class Tagged[A](level: Level, message: () => A)
 object TaggedLogMedium {
   final case class TimestampedMessage[A](level: Level, message: () => A, timestamp: String)
 
-  def console[A](prefix: Option[String]): LogMedium[Throwable, Tagged[A]] =
-    withTags(prefix, RawLogMedium.console)
+  def consoleE[A](prefix: Option[String]): LogMedium[Throwable, Tagged[A]] =
+    withTagsE(prefix, RawLogMedium.console)
 
-  def safeConsole[A](prefix: Option[String]): LogMedium[Nothing, Tagged[A]] =
-    safeWithTags(prefix, RawLogMedium.console)
+  def console[A](prefix: Option[String]): LogMedium[Nothing, Tagged[A]] =
+    withTags(prefix, RawLogMedium.console)
 
   def silent[A]: LogMedium[Nothing, Tagged[A]] =
     LogMedium(_ => ZIO.unit)
 
   ////
 
-  def withTags[A](
+  def withTagsE[A](
     prefix: Option[String],
     base: LogMedium[Nothing, String]
   ): LogMedium[Throwable, Tagged[A]] =
@@ -67,7 +67,7 @@ object TaggedLogMedium {
       .contramap[TimestampedMessage[A]](asString(prefix))
       .contramapM[Throwable, Tagged[A]](asTimestamped)
 
-  def safeWithTags[A](
+  def withTags[A](
     prefix: Option[String],
     base: LogMedium[Nothing, String]
   ): LogMedium[Nothing, Tagged[A]] =

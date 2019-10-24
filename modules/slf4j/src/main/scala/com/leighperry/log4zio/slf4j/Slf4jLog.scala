@@ -5,20 +5,20 @@ import zio.{ IO, ZIO }
 
 object Slf4jLog {
 
-  def logger(prefix: Option[String]): IO[Throwable, LogE[Throwable, String]] =
+  def loggerE(prefix: Option[String]): IO[Throwable, LogE[Throwable, String]] =
     ZIO
       .effect(org.slf4j.LoggerFactory.getLogger(getClass))
-      .flatMap(slfLogger => LogE.make[Throwable, String](Slf4jLogMedium.slf4j(prefix, slfLogger)))
+      .flatMap(slfLogger => LogE.make[Throwable, String](Slf4jLogMedium.slf4jE(prefix, slfLogger)))
 
-  def safeLogger(prefix: Option[String]): IO[Nothing, LogE[Nothing, String]] =
+  def logger(prefix: Option[String]): IO[Nothing, LogE[Nothing, String]] =
     ZIO
       .effect(org.slf4j.LoggerFactory.getLogger(getClass))
-      .flatMap(slfLogger => LogE.make[Nothing, String](Slf4jLogMedium.safeSlf4j(prefix, slfLogger)))
+      .flatMap(slfLogger => LogE.make[Nothing, String](Slf4jLogMedium.slf4j(prefix, slfLogger)))
       .catchAll {
         _ =>
           // fallback on creation failure to console output
           for {
-            fb <- LogE.safeConsole[String](prefix)
+            fb <- LogE.console[String](prefix)
             _ <- fb.log.warn("Error creating slf4j logger; falling back to tagged console")
           } yield fb
       }

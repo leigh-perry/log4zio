@@ -5,14 +5,14 @@ import zio.ZIO
 
 object Slf4jLogMedium {
 
-  def slf4j(prefix: Option[String], slf: org.slf4j.Logger): LogMedium[Throwable, Tagged[String]] =
+  def slf4jE(prefix: Option[String], slf: org.slf4j.Logger): LogMedium[Throwable, Tagged[String]] =
     prefixLogger[Throwable](prefix, slf4jLogMedium(slf))
 
-  def safeSlf4j(prefix: Option[String], slf: org.slf4j.Logger): LogMedium[Nothing, Tagged[String]] =
+  def slf4j(prefix: Option[String], slf: org.slf4j.Logger): LogMedium[Nothing, Tagged[String]] =
     prefixLogger[Nothing](
       prefix,
       slf4jLogMedium(slf)
-        .withFallback(TaggedLogMedium.safeConsole(prefix).log)
+        .withFallback(TaggedLogMedium.console(prefix).log)
     )
 
   def slf4jLogMedium(slf: org.slf4j.Logger): LogMedium[Throwable, Tagged[String]] =
