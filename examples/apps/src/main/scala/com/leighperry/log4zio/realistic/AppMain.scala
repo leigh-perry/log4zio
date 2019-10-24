@@ -1,17 +1,20 @@
 package com.leighperry.log4zio.realistic
 
-import com.leighperry.log4zio.{Log, LogE}
+import com.leighperry.log4zio.Log
 import com.leighperry.log4zio.slf4j.Slf4jLog
 import zio.blocking.Blocking
 import zio.system.System
-import zio.{App, UIO, ZIO}
+import zio.{ App, UIO, ZIO }
 
 final case class ProgramConfig(inputPath: String, outputPath: String)
 
 object AppMain extends App {
 
-  final case class AppEnv(log: LogE.Service[Nothing, String], config: Config.Service, spark: Spark.Service)
-    extends Log[String]
+  final case class AppEnv(
+    log: Log.Service[Nothing, String],
+    config: Config.Service,
+    spark: Spark.Service
+  ) extends Log[String]
     with Config
     with Spark
     with Blocking.Live
@@ -168,7 +171,7 @@ object Application {
   val logSomething: ZIO[Log[String] with Config, Nothing, Unit] =
     for {
       cfg <- ZIO.accessM[Config](_.config.config)
-      log <- LogE.stringLog
+      log <- Log.stringLog
       _ <- log.info(s"Executing with parameters ${cfg.kafka} without sparkSession")
     } yield ()
 
@@ -176,7 +179,7 @@ object Application {
     for {
       session <- ZIO.accessM[Spark](_.spark.spark)
       result <- zio.blocking.effectBlocking(session.slowOp("SELECT something"))
-      log <- LogE.stringLog
+      log <- Log.stringLog
       _ <- log.info(s"Executed something with spark ${session.version}: $result")
     } yield ()
 
@@ -184,13 +187,13 @@ object Application {
     for {
       cfg <- ZIO.accessM[Config](_.config.config)
       spark <- ZIO.accessM[Spark](_.spark.spark)
-      log <- LogE.stringLog
+      log <- Log.stringLog
       _ <- log.info(s"Executing ${cfg.kafka} using ${spark.version}")
     } yield ()
 
   val execute: ZIO[Log[String] with Spark with Config with Blocking, AppError, Unit] =
     for {
-      log <- LogE.stringLog
+      log <- Log.stringLog
       cfg <- ZIO.accessM[Config](_.config.config)
       _ <- logSomething
       _ <- runSparkJob.mapError(AppError.exception)

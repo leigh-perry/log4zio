@@ -1,8 +1,8 @@
 package com.leighperry.log4zio
 
 import com.leighperry.log4zio.testsupport.TestSupport
-import org.scalacheck.{Gen, Properties}
-import zio.{Ref, ZIO}
+import org.scalacheck.{ Gen, Properties }
+import zio.{ Ref, ZIO }
 
 object LogTest extends Properties("LogTest") with TestSupport {
 
@@ -47,7 +47,7 @@ object LogTest extends Properties("LogTest") with TestSupport {
       entries <- Ref.make(List.empty[String])
       testMedium = LogMedium[Nothing, String](a => entries.update(a :: _).unit)
       taggedTestMedium = testMedium.contramap(formatMessage(prefix, (_: Tagged[String])))
-      log <- LogE.make[Nothing, String](taggedTestMedium)
+      log <- Log.make[Nothing, String](taggedTestMedium)
     } yield (entries, log)
 
   private def formatMessage(prefix: Option[String], m: Tagged[String]) =

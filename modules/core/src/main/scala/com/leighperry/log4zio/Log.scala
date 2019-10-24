@@ -3,14 +3,14 @@ package com.leighperry.log4zio
 import zio.{ IO, ZIO }
 
 trait LogE[E, A] {
-  def log: LogE.Service[E, A]
+  def log: Log.Service[E, A]
 }
 
-object LogE {
-  def log[E, A]: ZIO[LogE[E, A], Nothing, LogE.Service[E, A]] =
+object Log {
+  def log[E, A]: ZIO[LogE[E, A], Nothing, Log.Service[E, A]] =
     ZIO.access[LogE[E, A]](_.log)
 
-  def stringLog: ZIO[LogE[Nothing, String], Nothing, LogE.Service[Nothing, String]] =
+  def stringLog: ZIO[LogE[Nothing, String], Nothing, Log.Service[Nothing, String]] =
     log[Nothing, String]
 
   /**
