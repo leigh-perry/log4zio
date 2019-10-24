@@ -10,8 +10,11 @@ final case class ProgramConfig(inputPath: String, outputPath: String)
 
 object AppMain extends App {
 
-  final case class AppEnv(log: Log.Service[String], config: Config.Service, spark: Spark.Service)
-    extends Log[String]
+  final case class AppEnv(
+    log: Log.Service[Nothing, String],
+    config: Config.Service,
+    spark: Spark.Service
+  ) extends Log[String]
     with Config
     with Spark
     with Blocking.Live

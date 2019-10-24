@@ -41,16 +41,16 @@ for example taking a `String` and (effectfully) writing it somewhere.
 `LogMedium[A]` is a contravariant functor, so it can be reused to implement another 
 `LogMedium[B]` via `contramap`, so long as `B` can be converted to an `A`.
 
-### `TaggedStringLogMedium`
+### `TaggedLogMedium`
 
-`TaggedStringLogMedium` encapsulates the conventional logging pattern, with a logging
+`TaggedLogMedium` encapsulates the conventional logging pattern, with a logging
 level (such as INFO) and timestamp. Addition of the level and timestamp info is also
 achieved by `contramap`-ing the additional level and timestamp tags onto a raw logger. 
 Eg:
 ```scala
 final case class Tagged[A](level: Level, message: () => A)
 
-object TaggedStringLogMedium {
+object TaggedLogMedium {
   final case class TimestampedMessage[A](level: Level, message: () => A, timestamp: String)
 
   def console[A](prefix: Option[String]): LogMedium[Tagged[A]] =

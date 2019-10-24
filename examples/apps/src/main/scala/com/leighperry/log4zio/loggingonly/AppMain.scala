@@ -5,7 +5,7 @@ import zio.ZIO
 
 object AppMain extends zio.App {
 
-  final case class AppEnv(log: Log.Service[String]) extends Log[String]
+  final case class AppEnv(log: Log.Service[Nothing, String]) extends Log[String]
 
   val appName = "logging-app"
 
@@ -16,9 +16,8 @@ object AppMain extends zio.App {
 
       pgm = Application.execute.provide(AppEnv(log))
 
-      exitCode <- pgm.foldM(
-        e => log.error(s"Application failed: $e") *> ZIO.succeed(1),
-        _ => log.info("Application terminated with no error indication") *> ZIO.succeed(0)
+      exitCode <- pgm *> log.info("Application terminated with no error indication") *> ZIO.succeed(
+        0
       )
     } yield exitCode
 }
