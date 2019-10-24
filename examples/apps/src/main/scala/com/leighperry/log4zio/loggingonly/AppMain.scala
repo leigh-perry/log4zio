@@ -11,7 +11,7 @@ object AppMain extends zio.App {
 
   override def run(args: List[String]): ZIO[zio.ZEnv, Nothing, Int] =
     for {
-      logsvc <- Log.console[Nothing, String](Some(appName))
+      logsvc <- Log.safeConsole[String](Some(appName))
       log = logsvc.log
 
       pgm = Application.execute.provide(AppEnv(log))

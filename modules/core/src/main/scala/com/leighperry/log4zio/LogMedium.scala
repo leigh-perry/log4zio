@@ -3,7 +3,7 @@ package com.leighperry.log4zio
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
-import zio.{ IO, UIO, ZIO }
+import zio.{ IO, ZIO }
 
 /**
  * Encapsulation of log writing to some medium, via `A => UIO[Unit]`
@@ -43,35 +43,51 @@ final case class Tagged[A](level: Level, message: () => A)
 object TaggedLogMedium {
   final case class TimestampedMessage[A](level: Level, message: () => A, timestamp: String)
 
-  def console[E, A](prefix: Option[String]): LogMedium[E, Tagged[A]] =
+  def console[A](prefix: Option[String]): LogMedium[Throwable, Tagged[A]] =
     withTags(prefix, RawLogMedium.console)
+
+  def safeConsole[A](prefix: Option[String]): LogMedium[Nothing, Tagged[A]] =
+    safeWithTags(prefix, RawLogMedium.console)
 
   def silent[A]: LogMedium[Nothing, Tagged[A]] =
     LogMedium(_ => ZIO.unit)
 
-  def withTags[E, A](
+  def withTags[A](
     prefix: Option[String],
     base: LogMedium[Nothing, String]
-  ): LogMedium[E, Tagged[A]] =
+  ): LogMedium[Throwable, Tagged[A]] =
     base
-      .contramap[TimestampedMessage[A]](taggedTimestamped(prefix))
-      .contramapM[E, Tagged[A]](tagged)
+      .contramap[TimestampedMessage[A]](asString(prefix))
+      .contramapM[Throwable, Tagged[A]](asTimestamped)
 
-  def tagged[A, E]: Tagged[A] => ZIO[Any, Nothing, TimestampedMessage[A]] =
-    (a: Tagged[A]) =>
+  def safeWithTags[A](
+    prefix: Option[String],
+    base: LogMedium[Nothing, String]
+  ): LogMedium[Nothing, Tagged[A]] =
+    base
+      .contramap[TimestampedMessage[A]](asString(prefix))
+      .contramapM[Nothing, Tagged[A]] {
+        (t: Tagged[A]) =>
+          asTimestamped(t)
+            .catchAll(
+              _ => ZIO.succeed(TimestampedMessage[A](t.level, t.message, "(timestamp error)"))
+            )
+      }
+
+  def asTimestamped[A]: Tagged[A] => ZIO[Any, Throwable, TimestampedMessage[A]] =
+    (t: Tagged[A]) =>
       ZIO
         .effect(LocalDateTime.now)
         .map(timestampFormat.format)
-        .catchAll(_ => UIO("(timestamp error)"))
-        .map(TimestampedMessage[A](a.level, a.message, _))
+        .map(TimestampedMessage[A](t.level, t.message, _))
 
-  def taggedTimestamped[A](prefix: Option[String]): TimestampedMessage[A] => String =
-    (m: TimestampedMessage[A]) =>
+  def asString[A](prefix: Option[String]): TimestampedMessage[A] => String =
+    (ts: TimestampedMessage[A]) =>
       "%s %-5s - %s%s".format(
-        m.timestamp,
-        m.level.name,
+        ts.timestamp,
+        ts.level.name,
         prefix.fold("")(s => s"$s: "),
-        m.message()
+        ts.message()
       )
 
   private val timestampFormat: DateTimeFormatter =

@@ -30,8 +30,11 @@ object Log {
 
   //// Built-in implementations
 
-  def console[E, A](prefix: Option[String]): IO[E, Log[E, A]] =
-    make(TaggedLogMedium.console(prefix))
+  def console[A](prefix: Option[String]): IO[Throwable, Log[Throwable, A]] =
+    make[Throwable, A](TaggedLogMedium.console(prefix))
+
+  def safeConsole[A](prefix: Option[String]): IO[Nothing, Log[Nothing, A]] =
+    make[Nothing, A](TaggedLogMedium.safeConsole(prefix))
 
   def silent[A]: ZIO[Any, Nothing, Log[Nothing, A]] =
     make[Nothing, A](TaggedLogMedium.silent[A])

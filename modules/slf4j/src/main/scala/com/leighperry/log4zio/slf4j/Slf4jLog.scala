@@ -13,7 +13,7 @@ object Slf4jLog {
         _ =>
           // fallback on creation failure to console output
           for {
-            fb <- Log.console[Nothing, String](prefix)
+            fb <- Log.safeConsole[String](prefix)
             _ <- fb.log.warn("Error creating slf4j logger; falling back to tagged console")
           } yield fb
       }

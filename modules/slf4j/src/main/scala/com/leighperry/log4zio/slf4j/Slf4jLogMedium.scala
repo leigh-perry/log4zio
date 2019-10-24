@@ -20,7 +20,7 @@ object Slf4jLogMedium {
               case Level.Debug =>
                 ZIO.effect(slf.debug(a.message()))
             }
-          result.catchAll(_ => TaggedLogMedium.console(prefix).log(a)) // fallback on write failure
+          result.catchAll(_ => TaggedLogMedium.safeConsole(prefix).log(a)) // fallback on write failure
       }
 
     // If prefix is required, contramap this logger with another
