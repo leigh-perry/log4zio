@@ -1,5 +1,13 @@
 # log4zio
 
+![alt text](https://travis-ci.org/leigh-perry/log4zio.svg?branch=master)
+[![Maven Central](https://img.shields.io/maven-central/v/com.github.leigh-perry/log4zio_2.13.svg)](http://search.maven.org/#search|gav|1|g%3A%22com.github.leigh-perry%22%20AND%20a%3A%22log4zio_2.13%22)
+
+```scala
+// available for Scala 2.12, 2.13
+libraryDependencies += "com.github.leigh-perry" %% "log4zio-core" % "0.4.2"
+```
+
 # Introduction
 
 This library targets error-free, composable logger creation.
@@ -197,7 +205,7 @@ object AppMain extends zio.App {
 # Release
 
 ```bash
-VERS=0.2.0
+VERS=0.2.2
 git tag -a v${VERS} -m "v${VERS}"
 git push origin v${VERS}
 ```
