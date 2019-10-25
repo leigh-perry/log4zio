@@ -15,6 +15,8 @@ This library targets error-free, composable logger creation.
 1. The `log4zio` interface assumes that the user doesn't want to experience logging failures.
 Logging is most important under failure conditions, so it is best to log via a 
 fallback mechanism rather than fail altogether.
+*However, if you prefer to expose logging errors to handle them explicitly, there are error-ful (error-prone?)
+versions of the standard loggers available.*
 
 1. The library lets the user create a new logging capability by composing refinements on top of 
 a base logging implementation.
