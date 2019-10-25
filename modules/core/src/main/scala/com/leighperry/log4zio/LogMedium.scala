@@ -34,9 +34,11 @@ object Level {
 
 object RawLogMedium {
 
+  /** Unfailing simple console output */
   def console: LogMedium[Nothing, String] =
     LogMedium[Nothing, String](zio.console.Console.Live.console.putStrLn)
 
+  /** Inhibit log output – useful for unit testing */
   def silent[A]: LogMedium[Nothing, String] =
     LogMedium(_ => ZIO.unit)
 
@@ -47,17 +49,30 @@ final case class Tagged[A](level: Level, message: () => A)
 object TaggedLogMedium {
   final case class TimestampedMessage[A](level: Level, message: () => A, timestamp: String)
 
+  /** A console with conventional JVM-style logger output */
   def consoleE[A](prefix: Option[String]): LogMedium[Throwable, Tagged[A]] =
     withTagsE(prefix, RawLogMedium.console)
 
+  /**
+   * An unfailing console with conventional JVM-style logger output that falls back to
+   *  simple console output in the event of any error
+   */
   def console[A](prefix: Option[String]): LogMedium[Nothing, Tagged[A]] =
     withTags(prefix, RawLogMedium.console)
 
+  /** Inhibit log output – useful for unit testing */
   def silent[A]: LogMedium[Nothing, Tagged[A]] =
     LogMedium(_ => ZIO.unit)
 
   ////
 
+  /**
+   * Creates a conventional JVM-style logger output over the top of an existing string logger
+   *
+   * @param prefix an optional application-specific string that can be prepended to each log message
+   * @param base the base medium that the rendered string output will be logged to
+   * @tparam A type of the messages to be converted to string and logged
+   */
   def withTagsE[A](
     prefix: Option[String],
     base: LogMedium[Nothing, String]
@@ -66,6 +81,15 @@ object TaggedLogMedium {
       .contramap[TimestampedMessage[A]](asString(prefix))
       .contramapM[Throwable, Tagged[A]](asTimestamped)
 
+  /**
+   * Creates an unfailing conventional JVM-style logger output over the top of an existing string logger.
+   * In the event of an error (eg generating the timestamp) information, rather than failing, this
+   * logger falls back to logging without timestamp.
+   *
+   * @param prefix an optional application-specific string that can be prepended to each log message
+   * @param base the base medium that the rendered string output will be logged to
+   * @tparam A type of the messages to be converted to string and logged
+   */
   def withTags[A](
     prefix: Option[String],
     base: LogMedium[Nothing, String]

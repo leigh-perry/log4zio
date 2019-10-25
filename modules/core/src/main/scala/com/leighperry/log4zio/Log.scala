@@ -1,17 +1,21 @@
 package com.leighperry.log4zio
 
-import zio.{IO, ZIO}
+import zio.{ IO, ZIO }
 
 trait Log[E, A] {
   def log: Log.Service[E, A]
 }
 
 object Log {
+
+  /** Synonym for a non-failing log service – one that does not emit errors */
   type SafeLog[A] = Log[Nothing, A]
 
+  /** Shortcut to retrieving the configured `Log.Service` */
   def log[E, A]: ZIO[Log[E, A], Nothing, Log.Service[E, A]] =
     ZIO.access[Log[E, A]](_.log)
 
+  /** Shortcut to retrieving the configured non-failing string-based `Log.Service` */
   def stringLog: ZIO[Log[Nothing, String], Nothing, Log.Service[Nothing, String]] =
     log[Nothing, String]
 
@@ -32,12 +36,18 @@ object Log {
 
   //// Built-in implementations
 
+  /** A console with conventional JVM-style logger output that can emit `Throwable` errors */
   def consoleE[A](prefix: Option[String]): IO[Throwable, Log[Throwable, A]] =
     make[Throwable, A](TaggedLogMedium.consoleE(prefix))
 
+  /**
+   * An unfailing console with conventional JVM-style logger output that falls back to
+   *  simple console output in the event of any error
+   */
   def console[A](prefix: Option[String]): IO[Nothing, Log[Nothing, A]] =
     make[Nothing, A](TaggedLogMedium.console(prefix))
 
+  /** Inhibit log output – useful for unit testing */
   def silent[A]: ZIO[Any, Nothing, Log[Nothing, A]] =
     make[Nothing, A](TaggedLogMedium.silent[A])
 
