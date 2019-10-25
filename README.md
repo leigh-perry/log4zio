@@ -5,7 +5,7 @@
 
 ```scala
 // available for Scala 2.12, 2.13
-libraryDependencies += "com.github.leigh-perry" %% "log4zio-core" % "0.4.2"
+libraryDependencies += "com.github.leigh-perry" %% "log4zio-core" % "0.2.2"
 ```
 
 # Introduction
