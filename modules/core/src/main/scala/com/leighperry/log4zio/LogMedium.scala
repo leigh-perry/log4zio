@@ -8,14 +8,14 @@ import zio.{ IO, ZIO }
 /**
  * Encapsulation of log writing to some medium, via `A => UIO[Unit]`
  */
-final case class LogMedium[E, A](log: A => IO[E, Unit]) {
+final case class LogMedium[+E, A](log: A => IO[E, Unit]) {
   def contramap[B](f: B => A): LogMedium[E, B] =
     LogMedium[E, B](b => log(f(b)))
 
   def contramapM[E1 >: E, B](f: B => IO[E1, A]): LogMedium[E1, B] =
     LogMedium[E1, B](b => f(b).flatMap(log))
 
-  def orElse[E2 >: E](that: => LogMedium[E2, A]): LogMedium[E2, A] =
+  def orElse[E2](that: => LogMedium[E2, A]): LogMedium[E2, A] =
     LogMedium[E2, A](a => log(a).catchAll(_ => that.log(a)))
 }
 
