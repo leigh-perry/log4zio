@@ -15,8 +15,8 @@ final case class LogMedium[E, A](log: A => IO[E, Unit]) {
   def contramapM[E1 >: E, B](f: B => IO[E1, A]): LogMedium[E1, B] =
     LogMedium[E1, B](b => f(b).flatMap(log))
 
-  def withFallback[E1](fb: A => IO[E1, Unit]): LogMedium[E1, A] =
-    LogMedium[E1, A](a => log(a).catchAll(_ => fb(a)))
+  def orElse[E2 >: E](that: => LogMedium[E2, A]): LogMedium[E2, A] =
+    LogMedium[E2, A](a => log(a).catchAll(_ => that.log(a)))
 }
 
 /**
