@@ -1,13 +1,15 @@
 package com.leighperry.log4zio.nonstring
 
 import com.leighperry.log4zio.Log.SafeLog
-import com.leighperry.log4zio.{Log, LogMedium, RawLogMedium, Tagged}
-import zio.{UIO, ZIO}
+import com.leighperry.log4zio.{ Log, LogMedium, RawLogMedium, Tagged }
+import zio.{ UIO, ZIO }
 
 object AppMain extends zio.App {
 
   def intLogger: UIO[SafeLog[Int]] =
-    Log.make[Nothing, Int](intRendered(RawLogMedium.console))
+    Log
+      .make[Nothing, Int]
+      .provide(intRendered(RawLogMedium.console))
 
   def intRendered(base: LogMedium[Nothing, String]): LogMedium[Nothing, Tagged[Int]] =
     base.contramap {

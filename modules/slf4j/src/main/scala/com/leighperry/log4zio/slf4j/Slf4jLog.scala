@@ -13,7 +13,12 @@ object Slf4jLog {
   def loggerE(prefix: Option[String]): IO[Throwable, Log[Throwable, String]] =
     ZIO
       .effect(org.slf4j.LoggerFactory.getLogger(getClass))
-      .flatMap(slfLogger => Log.make[Throwable, String](Slf4jLogMedium.slf4jE(prefix, slfLogger)))
+      .flatMap(
+        slfLogger =>
+          Log
+            .make[Throwable, String]
+            .provide(Slf4jLogMedium.slf4jE(prefix, slfLogger))
+      )
 
   /**
    * Creates a conventional JVM-style logger output using SLF4J. In the event of error when
@@ -24,7 +29,12 @@ object Slf4jLog {
   def logger(prefix: Option[String]): IO[Nothing, Log[Nothing, String]] =
     ZIO
       .effect(org.slf4j.LoggerFactory.getLogger(getClass))
-      .flatMap(slfLogger => Log.make[Nothing, String](Slf4jLogMedium.slf4j(prefix, slfLogger)))
+      .flatMap(
+        slfLogger =>
+          Log
+            .make[Nothing, String]
+            .provide(Slf4jLogMedium.slf4j(prefix, slfLogger))
+      )
       .catchAll {
         _ =>
           // fallback on creation failure to console output

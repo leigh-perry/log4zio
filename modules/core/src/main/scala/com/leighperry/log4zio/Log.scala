@@ -38,38 +38,41 @@ object Log {
 
   /** A console with conventional JVM-style logger output that can emit `Throwable` errors */
   def consoleE[A](prefix: Option[String]): IO[Throwable, Log[Throwable, A]] =
-    make[Throwable, A](TaggedLogMedium.consoleE(prefix))
+    make[Throwable, A]
+      .provide(TaggedLogMedium.consoleE(prefix))
 
   /**
    * An unfailing console with conventional JVM-style logger output that falls back to
    *  simple console output in the event of any error
    */
   def console[A](prefix: Option[String]): IO[Nothing, Log[Nothing, A]] =
-    make[Nothing, A](TaggedLogMedium.console(prefix))
+    make[Nothing, A]
+      .provide(TaggedLogMedium.console(prefix))
 
   /** Inhibit log output – useful for unit testing */
   def silent[A]: ZIO[Any, Nothing, Log[Nothing, A]] =
-    make[Nothing, A](TaggedLogMedium.silent[A])
+    make[Nothing, A]
+      .provide(TaggedLogMedium.silent[A])
 
-  // TODO `LogMedium` could be `R` here
-  def make[E, A](logMedium: LogMedium[E, Tagged[A]]): IO[E, Log[E, A]] =
-    ZIO.succeed {
-      new Log[E, A] {
-        override def log: Service[E, A] =
-          new Service[E, A] {
-            override def error(s: => A): IO[E, Unit] =
-              write(Level.Error, s)
-            override def warn(s: => A): IO[E, Unit] =
-              write(Level.Warn, s)
-            override def info(s: => A): IO[E, Unit] =
-              write(Level.Info, s)
-            override def debug(s: => A): IO[E, Unit] =
-              write(Level.Debug, s)
+  def make[E, A]: ZIO[LogMedium[E, Tagged[A]], E, Log[E, A]] =
+    ZIO.access[LogMedium[E, Tagged[A]]] {
+      logMedium =>
+        new Log[E, A] {
+          override def log: Service[E, A] =
+            new Service[E, A] {
+              override def error(s: => A): IO[E, Unit] =
+                write(Level.Error, s)
+              override def warn(s: => A): IO[E, Unit] =
+                write(Level.Warn, s)
+              override def info(s: => A): IO[E, Unit] =
+                write(Level.Info, s)
+              override def debug(s: => A): IO[E, Unit] =
+                write(Level.Debug, s)
 
-            private def write(level: Level, s: => A) =
-              logMedium.log(Tagged(level, (() => s)))
-          }
-      }
+              private def write(level: Level, s: => A) =
+                logMedium.log(Tagged(level, (() => s)))
+            }
+        }
     }
 
 }

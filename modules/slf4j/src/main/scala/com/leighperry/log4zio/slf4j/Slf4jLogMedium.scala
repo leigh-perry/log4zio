@@ -22,8 +22,7 @@ object Slf4jLogMedium {
   def slf4j(prefix: Option[String], slf: org.slf4j.Logger): LogMedium[Nothing, Tagged[String]] =
     prefixLogger[Nothing](
       prefix,
-      slf4jLogMedium(slf)
-        .withFallback(TaggedLogMedium.console(prefix).log)
+      slf4jLogMedium(slf).withFallback(TaggedLogMedium.console(prefix).log)
     )
 
   def slf4jLogMedium(slf: org.slf4j.Logger): LogMedium[Throwable, Tagged[String]] =
