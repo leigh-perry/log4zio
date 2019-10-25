@@ -17,7 +17,6 @@ final case class LogMedium[E, A](log: A => IO[E, Unit]) {
 
   def withFallback[E1](fb: A => IO[E1, Unit]): LogMedium[E1, A] =
     LogMedium[E1, A](a => log(a).catchAll(_ => fb(a)))
-
 }
 
 /**

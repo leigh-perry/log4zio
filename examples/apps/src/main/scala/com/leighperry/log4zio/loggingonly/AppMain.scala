@@ -1,11 +1,12 @@
 package com.leighperry.log4zio.loggingonly
 
 import com.leighperry.log4zio.Log
+import com.leighperry.log4zio.Log.SafeLog
 import zio.ZIO
 
 object AppMain extends zio.App {
 
-  final case class AppEnv(log: Log.Service[Nothing, String]) extends Log[String]
+  final case class AppEnv(log: Log.Service[Nothing, String]) extends SafeLog[String]
 
   val appName = "logging-app"
 
@@ -24,14 +25,14 @@ object AppMain extends zio.App {
 
 // The core application
 object Application {
-  val doSomething: ZIO[Log[String], Nothing, Unit] =
+  val doSomething: ZIO[SafeLog[String], Nothing, Unit] =
     for {
       log <- Log.stringLog
       _ <- log.info(s"Executing something")
       _ <- log.info(s"Finished executing something")
     } yield ()
 
-  val execute: ZIO[Log[String], Nothing, Unit] =
+  val execute: ZIO[SafeLog[String], Nothing, Unit] =
     for {
       log <- Log.stringLog
       _ <- log.info(s"Starting app")

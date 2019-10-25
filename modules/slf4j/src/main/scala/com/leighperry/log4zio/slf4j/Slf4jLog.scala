@@ -1,16 +1,16 @@
 package com.leighperry.log4zio.slf4j
 
-import com.leighperry.log4zio.{ Log, LogE }
+import com.leighperry.log4zio.Log
 import zio.{ IO, ZIO }
 
 object Slf4jLog {
 
-  def loggerE(prefix: Option[String]): IO[Throwable, LogE[Throwable, String]] =
+  def loggerE(prefix: Option[String]): IO[Throwable, Log[Throwable, String]] =
     ZIO
       .effect(org.slf4j.LoggerFactory.getLogger(getClass))
       .flatMap(slfLogger => Log.make[Throwable, String](Slf4jLogMedium.slf4jE(prefix, slfLogger)))
 
-  def logger(prefix: Option[String]): IO[Nothing, LogE[Nothing, String]] =
+  def logger(prefix: Option[String]): IO[Nothing, Log[Nothing, String]] =
     ZIO
       .effect(org.slf4j.LoggerFactory.getLogger(getClass))
       .flatMap(slfLogger => Log.make[Nothing, String](Slf4jLogMedium.slf4j(prefix, slfLogger)))
