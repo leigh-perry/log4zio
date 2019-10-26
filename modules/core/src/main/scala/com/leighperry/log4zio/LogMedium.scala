@@ -6,7 +6,7 @@ import java.time.format.DateTimeFormatter
 import zio.{ IO, ZIO }
 
 /**
- * Encapsulation of log writing to some medium, via `A => UIO[Unit]`
+ * Encapsulation of log writing to some medium, via `A => IO[E, Unit]`
  */
 final case class LogMedium[+E, A](log: A => IO[E, Unit]) {
   def contramap[B](f: B => A): LogMedium[E, B] =
