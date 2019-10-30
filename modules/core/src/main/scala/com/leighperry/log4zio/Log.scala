@@ -19,14 +19,7 @@ object Log {
   def stringLog: ZIO[Log[Nothing, String], Nothing, Log.Service[Nothing, String]] =
     log[Nothing, String]
 
-  /**
-   * An implementation of conventional logging with timestamp and logging level
-   *
-   * This interface assumes that the user doesn't want to experience logging failures. Logging is
-   * most important under failure conditions, so it is best to log via a fallback mechanism rather than
-   * fail altogether. Hence error type `Nothing`. It is the responsibility of `Service` implementations
-   * to implement fallback behaviour.
-   */
+  /** A service for conventional logging with timestamp and logging level */
   trait Service[E, A] {
     def error(s: => A): IO[E, Unit]
     def warn(s: => A): IO[E, Unit]
