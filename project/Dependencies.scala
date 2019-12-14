@@ -7,7 +7,7 @@ object Dependencies {
     val slf4jApi = "1.7.29"
     val zio = "1.0.0-RC17"
 
-    val scalacheck = "1.14.2"
+    val scalacheck = "1.14.3"
     val logback = "1.2.3"
   }
 
