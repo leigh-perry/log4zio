@@ -4,7 +4,7 @@ object Dependencies {
   object Version {
     val kindProjectorVersion = "0.10.3"
 
-    val slf4jApi = "1.7.29"
+    val slf4jApi = "1.7.30"
     val zio = "1.0.0-RC17"
 
     val scalacheck = "1.14.3"
