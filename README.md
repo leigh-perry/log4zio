@@ -2,6 +2,7 @@
 
 ![alt text](https://travis-ci.org/leigh-perry/log4zio.svg?branch=master)
 [![Maven Central](https://img.shields.io/maven-central/v/com.github.leigh-perry/log4zio_2.13.svg)](http://search.maven.org/#search|gav|1|g%3A%22com.github.leigh-perry%22%20AND%20a%3A%22log4zio_2.13%22)
+![Grain free](https://img.shields.io/badge/grain-free-orange.svg)
 
 ```scala
 // available for Scala 2.12, 2.13
@@ -207,7 +208,7 @@ object AppMain extends zio.App {
 # Release
 
 ```bash
-VERS=0.2.4
+VERS=0.2.5
 git tag -a v${VERS} -m "v${VERS}"
 git push origin v${VERS}
 ```
