@@ -60,7 +60,7 @@ trait Config {
 
 object Config {
   trait Service {
-    def config: UIO[AppConfig]
+    def config: AppConfig
   }
 
   def make: ZIO[System, AppError, Config] =
@@ -71,8 +71,8 @@ object Config {
           new Config {
             override def config: Service =
               new Service {
-                override def config: UIO[AppConfig] =
-                  ZIO.succeed(cfg)
+                override def config: AppConfig =
+                  cfg
               }
           }
       )
@@ -131,7 +131,7 @@ trait Spark {
 
 object Spark {
   trait Service {
-    def spark: UIO[SparkSession]
+    def spark: SparkSession
   }
 
   def make(session: => SparkSession): ZIO[Blocking, Throwable, Spark] =
@@ -143,8 +143,8 @@ object Spark {
           new Spark {
             override def spark: Service =
               new Service {
-                override def spark: UIO[SparkSession] =
-                  ZIO.succeed(sparkSession)
+                override def spark: SparkSession =
+                  sparkSession
               }
           }
       )
@@ -171,14 +171,14 @@ object Spark {
 object Application {
   val logSomething: ZIO[SafeLog[String] with Config, Nothing, Unit] =
     for {
-      cfg <- ZIO.accessM[Config](_.config.config)
+      cfg <- ZIO.access[Config](_.config.config)
       log <- Log.stringLog
       _ <- log.info(s"Executing with parameters ${cfg.kafka} without sparkSession")
     } yield ()
 
   val runSparkJob: ZIO[SafeLog[String] with Spark with Blocking, Throwable, Unit] =
     for {
-      session <- ZIO.accessM[Spark](_.spark.spark)
+      session <- ZIO.access[Spark](_.spark.spark)
       result <- zio.blocking.effectBlocking(session.slowOp("SELECT something"))
       log <- Log.stringLog
       _ <- log.info(s"Executed something with spark ${session.version}: $result")
@@ -186,8 +186,8 @@ object Application {
 
   val processData: ZIO[SafeLog[String] with Spark with Config, Throwable, Unit] =
     for {
-      cfg <- ZIO.accessM[Config](_.config.config)
-      spark <- ZIO.accessM[Spark](_.spark.spark)
+      cfg <- ZIO.access[Config](_.config.config)
+      spark <- ZIO.access[Spark](_.spark.spark)
       log <- Log.stringLog
       _ <- log.info(s"Executing ${cfg.kafka} using ${spark.version}")
     } yield ()
@@ -195,7 +195,7 @@ object Application {
   val execute: ZIO[SafeLog[String] with Spark with Config with Blocking, AppError, Unit] =
     for {
       log <- Log.stringLog
-      cfg <- ZIO.accessM[Config](_.config.config)
+      cfg <- ZIO.access[Config](_.config.config)
       _ <- logSomething
       _ <- runSparkJob.mapError(AppError.exception)
       _ <- processData.mapError(AppError.exception)
