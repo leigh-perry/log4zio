@@ -16,8 +16,7 @@ object Slf4jLog {
       .flatMap(
         slfLogger =>
           Log
-            .make[Throwable, String]
-            .provide(Slf4jLogMedium.slf4jE(prefix, slfLogger))
+            .make[Throwable, String](Slf4jLogMedium.slf4jE(prefix, slfLogger))
       )
 
   /**
@@ -32,15 +31,14 @@ object Slf4jLog {
       .flatMap(
         slfLogger =>
           Log
-            .make[Nothing, String]
-            .provide(Slf4jLogMedium.slf4j(prefix, slfLogger))
+            .make[Nothing, String](Slf4jLogMedium.slf4j(prefix, slfLogger))
       )
       .catchAll {
         _ =>
           // fallback on creation failure to console output
           for {
             fb <- Log.console[String](prefix)
-            _ <- fb.log.warn("Error creating slf4j logger; falling back to tagged console")
+            _ <- fb.warn("Error creating slf4j logger; falling back to tagged console")
           } yield fb
       }
 
