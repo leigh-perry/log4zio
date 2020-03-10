@@ -3,7 +3,7 @@ package com.leighperry.log4zio
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
-import zio.{ IO, ZIO }
+import zio.IO
 
 /**
  * Encapsulation of log writing to some medium, via `A => IO[E, Unit]`
@@ -36,11 +36,11 @@ object RawLogMedium {
 
   /** Unfailing simple console output */
   def console: LogMedium[Nothing, String] =
-    LogMedium[Nothing, String](zio.console.Console.Live.console.putStrLn)
+    LogMedium[Nothing, String](a => IO.effectTotal(println(a)))
 
   /** Inhibit log output – useful for unit testing */
   def silent[A]: LogMedium[Nothing, String] =
-    LogMedium(_ => ZIO.unit)
+    LogMedium(_ => IO.unit)
 
 }
 
@@ -62,7 +62,7 @@ object TaggedLogMedium {
 
   /** Inhibit log output – useful for unit testing */
   def silent[A]: LogMedium[Nothing, Tagged[A]] =
-    LogMedium(_ => ZIO.unit)
+    LogMedium(_ => IO.unit)
 
   ////
 
@@ -100,14 +100,13 @@ object TaggedLogMedium {
         (t: Tagged[A]) =>
           asTimestamped(t)
             .catchAll(
-              _ => ZIO.succeed(TimestampedMessage[A](t.level, t.message, "(timestamp error)"))
+              _ => IO.succeed(TimestampedMessage[A](t.level, t.message, "(timestamp error)"))
             )
       }
 
-  def asTimestamped[A]: Tagged[A] => ZIO[Any, Throwable, TimestampedMessage[A]] =
+  def asTimestamped[A]: Tagged[A] => IO[Throwable, TimestampedMessage[A]] =
     (t: Tagged[A]) =>
-      ZIO
-        .effect(LocalDateTime.now)
+      IO.effect(LocalDateTime.now)
         .map(timestampFormat.format)
         .map(TimestampedMessage[A](t.level, t.message, _))
 

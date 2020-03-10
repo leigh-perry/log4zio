@@ -41,7 +41,8 @@ lazy val commonSettings =
     libraryDependencies ++=
       Seq(
         zio,
-        scalacheck % "test"
+        zioTest % "test",
+        zioTestSbt % "test"
       ) ++ compilerPlugins
   )
 
