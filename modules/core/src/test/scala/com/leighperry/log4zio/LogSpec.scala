@@ -61,6 +61,6 @@ object LogSpec extends DefaultRunnableSpec {
     } yield (entries, log)
 
   private def formatMessage(prefix: Option[String], m: Tagged[String]) =
-    "[%s][%s][%s]".format(m.level.name, prefix.fold("")(s => s"$s: "), m.message())
+    "[%s][%s][%s]".format(m.level.name, prefix.fold("")(s => s"$s "), m.message())
 
 }

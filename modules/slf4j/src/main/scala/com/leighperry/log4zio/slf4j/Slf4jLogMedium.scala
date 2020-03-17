@@ -52,7 +52,7 @@ object Slf4jLogMedium {
       sPrefix =>
         logger.contramap {
           a: Tagged[String] =>
-            a.copy(message = () => s"$sPrefix: ${a.message()}")
+            a.copy(message = () => s"$sPrefix ${a.message()}")
         }
     }
 

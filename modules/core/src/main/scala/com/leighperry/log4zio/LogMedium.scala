@@ -115,7 +115,7 @@ object TaggedLogMedium {
       "%s %-5s - %s%s".format(
         ts.timestamp,
         ts.level.name,
-        prefix.fold("")(s => s"$s: "),
+        prefix.fold("")(s => s"$s "),
         ts.message()
       )
 
