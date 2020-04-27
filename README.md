@@ -6,7 +6,7 @@
 
 ```scala
 // available for Scala 2.12, 2.13
-libraryDependencies += "com.github.leigh-perry" %% "log4zio-core" % "0.3.2"
+libraryDependencies += "com.github.leigh-perry" %% "log4zio-core" % "0.3.3"
 ```
 
 # Introduction
@@ -208,7 +208,7 @@ object AppMain extends zio.App {
 # Release
 
 ```bash
-VERS=0.3.2
+VERS=0.3.3
 git tag -a v${VERS} -m "v${VERS}"
 git push origin v${VERS}
 ```
