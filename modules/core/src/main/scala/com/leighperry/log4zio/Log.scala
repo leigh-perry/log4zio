@@ -3,7 +3,7 @@ package com.leighperry.log4zio
 import zio.IO
 
 /** A service for conventional logging with timestamp and logging level */
-trait Log[E, A] {
+trait Log[E, A] extends Serializable {
   def error(s: => A): IO[E, Unit]
   def warn(s: => A): IO[E, Unit]
   def info(s: => A): IO[E, Unit]

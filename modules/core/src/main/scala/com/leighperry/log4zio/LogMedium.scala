@@ -8,7 +8,7 @@ import zio.IO
 /**
  * Encapsulation of log writing to some medium, via `A => IO[E, Unit]`
  */
-final case class LogMedium[+E, A](log: A => IO[E, Unit]) {
+final case class LogMedium[+E, A](log: A => IO[E, Unit]) extends Serializable {
   def contramap[B](f: B => A): LogMedium[E, B] =
     LogMedium[E, B](b => log(f(b)))
 
@@ -22,7 +22,7 @@ final case class LogMedium[+E, A](log: A => IO[E, Unit]) {
 /**
  * Support for conventional JVM-style logging, ie tagged with level and timestamp
  */
-trait Level { val name: String }
+trait Level extends Serializable { val name: String }
 object Level {
   object Error extends Level { override val name = "ERROR" }
   object Warn extends Level { override val name = "WARN" }
@@ -44,7 +44,7 @@ object RawLogMedium {
 
 }
 
-final case class Tagged[A](level: Level, message: () => A)
+final case class Tagged[A](level: Level, message: () => A) extends Serializable
 
 object TaggedLogMedium {
   final case class TimestampedMessage[A](level: Level, message: () => A, timestamp: String)
