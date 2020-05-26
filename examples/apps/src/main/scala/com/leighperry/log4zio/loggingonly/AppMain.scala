@@ -2,19 +2,19 @@ package com.leighperry.log4zio.loggingonly
 
 import com.leighperry.log4zio.Log
 import com.leighperry.log4zio.Log.SafeLog
-import zio.{ IO, ZIO }
+import zio.{ExitCode, IO, ZIO}
 
 object AppMain extends zio.App {
 
   val appName = "logging-app"
 
-  override def run(args: List[String]): ZIO[zio.ZEnv, Nothing, Int] =
+  override def run(args: List[String]): ZIO[zio.ZEnv, Nothing, ExitCode] =
     for {
       log <- Log.console[String](Some(appName))
 
       exitCode <- new Application(log).execute *>
         log.info("Application terminated with no error indication") *>
-        ZIO.succeed(0)
+        ZIO.succeed(ExitCode.success)
 
     } yield exitCode
 }

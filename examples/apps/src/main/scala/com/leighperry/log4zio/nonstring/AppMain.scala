@@ -1,8 +1,8 @@
 package com.leighperry.log4zio.nonstring
 
 import com.leighperry.log4zio.Log.SafeLog
-import com.leighperry.log4zio.{ Log, LogMedium, RawLogMedium, Tagged }
-import zio.{ IO, UIO, ZIO }
+import com.leighperry.log4zio.{Log, LogMedium, RawLogMedium, Tagged}
+import zio.{ExitCode, IO, UIO, ZIO}
 
 object AppMain extends zio.App {
 
@@ -16,13 +16,13 @@ object AppMain extends zio.App {
         "%-5s - %d:%s".format(m.level.name, n, "x" * n)
     }
 
-  override def run(args: List[String]): ZIO[zio.ZEnv, Nothing, Int] =
+  override def run(args: List[String]): ZIO[zio.ZEnv, Nothing, ExitCode] =
     for {
       log <- intLogger
 
       pgm = new Application(log).execute
 
-      exitCode <- pgm *> log.info(10) *> IO.succeed(0)
+      exitCode <- pgm *> log.info(10) *> IO.succeed(ExitCode.success)
     } yield exitCode
 }
 
