@@ -1,6 +1,6 @@
 import Dependencies._
 
-val Scala_213 = "2.13.1"
+val Scala_213 = "2.13.2"
 val Scala_212 = "2.12.10"
 val Scala_211 = "2.11.12"
 
