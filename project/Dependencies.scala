@@ -7,7 +7,7 @@ object Dependencies {
     val slf4jApi = "1.7.32"
     val zio = "1.0.9"
 
-    val logback = "1.2.4"
+    val logback = "1.2.5"
   }
 
   val slf4jApi = "org.slf4j" % "slf4j-api" % Version.slf4jApi
